@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>SirenSpace</title>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
 
+
 <body>
+
 
     <!-- HEADER -->
 
@@ -20,6 +32,7 @@
         <div class="site-title">
             SirenSpace
         </div>
+
 
         <div class="account-area">
 
@@ -30,6 +43,7 @@
                 Login
             </button>
 
+
             <button
                 id="signupButton"
                 onclick="showSignup()"
@@ -37,10 +51,12 @@
                 Sign Up
             </button>
 
+
             <span
                 id="accountInfo"
-                style="display: none;"
+                style="display:none;"
             ></span>
+
 
             <button
                 id="logoutButton"
@@ -52,6 +68,7 @@
         </div>
 
     </header>
+
 
 
     <!-- NAVIGATION -->
@@ -66,6 +83,7 @@
             Posts
         </button>
 
+
         <button
             class="nav-tab"
             data-page="media"
@@ -77,12 +95,13 @@
     </nav>
 
 
-    <!-- MAIN CONTENT -->
+
+    <!-- MAIN -->
 
     <main class="site-main">
 
 
-        <!-- POSTS PAGE -->
+        <!-- POSTS -->
 
         <section
             id="postsPage"
@@ -98,6 +117,7 @@
                     placeholder="Search posts..."
                 >
 
+
                 <button
                     class="page-action-button post-message-button"
                     onclick="openCreatePost()"
@@ -107,12 +127,14 @@
 
             </div>
 
+
             <div id="postsContainer"></div>
 
         </section>
 
 
-        <!-- MEDIA PAGE -->
+
+        <!-- MEDIA -->
 
         <section
             id="mediaPage"
@@ -128,6 +150,7 @@
                     placeholder="Search media..."
                 >
 
+
                 <button
                     class="page-action-button media-upload-button"
                     onclick="openMediaUpload()"
@@ -136,6 +159,7 @@
                 </button>
 
             </div>
+
 
             <div
                 id="mediaContainer"
@@ -147,6 +171,7 @@
     </main>
 
 
+
     <!-- CREATE POST MODAL -->
 
     <div
@@ -156,6 +181,7 @@
 
         <div class="modal-content">
 
+
             <button
                 class="close-button"
                 onclick="closeCreatePost()"
@@ -163,12 +189,17 @@
                 ×
             </button>
 
-            <h2>Post Message</h2>
+
+            <h2>
+                Post Message
+            </h2>
+
 
             <textarea
                 id="postContent"
                 placeholder="What's on your mind?"
             ></textarea>
+
 
             <input
                 type="file"
@@ -177,15 +208,18 @@
                 onchange="handlePostFile(this)"
             >
 
+
             <div
                 id="selectedFile"
                 class="selected-file"
             ></div>
 
+
             <div
                 id="postError"
                 class="error-message"
             ></div>
+
 
             <button
                 class="post-submit-button"
@@ -194,9 +228,11 @@
                 Send
             </button>
 
+
         </div>
 
     </div>
+
 
 
     <!-- MEDIA UPLOAD MODAL -->
@@ -208,6 +244,7 @@
 
         <div class="modal-content">
 
+
             <button
                 class="close-button"
                 onclick="closeMediaUpload()"
@@ -215,7 +252,11 @@
                 ×
             </button>
 
-            <h2>Upload Video</h2>
+
+            <h2>
+                Upload Video
+            </h2>
+
 
             <input
                 type="text"
@@ -224,15 +265,18 @@
                 maxlength="100"
             >
 
+
             <textarea
                 id="mediaDescription"
                 placeholder="Description"
                 maxlength="2000"
             ></textarea>
 
+
             <label>
                 Video
             </label>
+
 
             <input
                 type="file"
@@ -241,14 +285,17 @@
                 onchange="handleMediaVideo(this)"
             >
 
+
             <div
                 id="selectedVideo"
                 class="selected-file"
             ></div>
 
+
             <label>
                 Thumbnail
             </label>
+
 
             <input
                 type="file"
@@ -257,15 +304,18 @@
                 onchange="handleMediaThumbnail(this)"
             >
 
+
             <div
                 id="selectedThumbnail"
                 class="selected-file"
             ></div>
 
+
             <div
                 id="mediaUploadError"
                 class="error-message"
             ></div>
+
 
             <button
                 class="post-submit-button"
@@ -274,9 +324,146 @@
                 Upload
             </button>
 
+
         </div>
 
     </div>
+
+
+
+    <div
+    id="videoViewer"
+    class="video-viewer"
+    style="display:none;"
+>
+    <button
+        class="video-exit-button"
+        onclick="closeVideoViewer()"
+    >
+        Exit
+    </button>
+
+    <div class="youtube-player">
+
+        <div class="youtube-video-wrapper">
+            <video
+                id="mainVideoPlayer"
+                playsinline
+            ></video>
+
+            <div
+                id="videoBigPlay"
+                class="video-big-play"
+            >
+                ▶
+            </div>
+
+            <div class="youtube-controls">
+
+                <div
+                    id="videoProgressContainer"
+                    class="video-progress-container"
+                >
+                    <div
+                        id="videoProgress"
+                        class="video-progress"
+                    ></div>
+                </div>
+
+                <div class="youtube-control-row">
+
+                    <button
+                        id="playPauseButton"
+                        class="player-button"
+                    >
+                        ▶
+                    </button>
+
+                    <span
+                        id="videoTime"
+                        class="video-time"
+                    >
+                        0:00 / 0:00
+                    </span>
+
+                    <div class="volume-container">
+
+                        <button
+                            id="muteButton"
+                            class="player-button"
+                        >
+                            🔊
+                        </button>
+
+                        <input
+                            id="volumeSlider"
+                            class="volume-slider"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value="1"
+                        >
+
+                    </div>
+
+                    <button
+                        id="speedButton"
+                        class="player-button"
+                    >
+                        1x
+                    </button>
+
+                    <button
+                        id="fullscreenButton"
+                        class="player-button"
+                    >
+                        ⛶
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+
+        <h2
+            id="viewerTitle"
+            class="viewer-title"
+        ></h2>
+
+        <div class="video-buttons">
+
+            <button id="likeButton">
+                Like 0
+            </button>
+
+            <button id="dislikeButton">
+                Dislike 0
+            </button>
+
+            <span id="viewCount">
+                Views: 0
+            </span>
+
+        </div>
+
+        <div class="viewer-uploader">
+
+            <img
+                id="viewerPoster"
+                alt=""
+            >
+
+        </div>
+
+        <p
+            id="viewerDescription"
+            class="viewer-description"
+        ></p>
+
+    </div>
+</div>
+
 
 
     <!-- ACCOUNT MODAL -->
@@ -287,6 +474,7 @@
     >
 
         <div class="modal-content">
+
 
             <button
                 class="close-button"
@@ -300,7 +488,10 @@
 
             <div id="loginForm">
 
-                <h2>Login</h2>
+                <h2>
+                    Login
+                </h2>
+
 
                 <input
                     type="text"
@@ -308,16 +499,19 @@
                     placeholder="Username"
                 >
 
+
                 <input
                     type="password"
                     id="loginPassword"
                     placeholder="Password"
                 >
 
+
                 <div
                     id="accountError"
                     class="error-message"
                 ></div>
+
 
                 <button
                     class="post-submit-button"
@@ -326,27 +520,35 @@
                     Login
                 </button>
 
+
                 <p>
+
                     Don't have an account?
+
                     <button
                         class="text-button"
                         onclick="showSignup()"
                     >
                         Sign Up
                     </button>
+
                 </p>
 
             </div>
+
 
 
             <!-- SIGN UP -->
 
             <div
                 id="signupForm"
-                style="display: none;"
+                style="display:none;"
             >
 
-                <h2>Sign Up</h2>
+                <h2>
+                    Sign Up
+                </h2>
+
 
                 <input
                     type="text"
@@ -354,16 +556,19 @@
                     placeholder="Username"
                 >
 
+
                 <input
                     type="password"
                     id="signupPassword"
                     placeholder="Password"
                 >
 
+
                 <div
                     id="accountError"
                     class="error-message"
                 ></div>
+
 
                 <button
                     class="post-submit-button"
@@ -372,29 +577,38 @@
                     Sign Up
                 </button>
 
+
                 <p>
+
                     Already have an account?
+
                     <button
                         class="text-button"
                         onclick="showLogin()"
                     >
                         Login
                     </button>
+
                 </p>
 
             </div>
+
 
         </div>
 
     </div>
 
 
+
     <!-- SCRIPTS -->
 
     <script src="supabase.js"></script>
-    <script src="posts.js"></script>
-    <script src="media.js"></script>
+
     <script src="app.js"></script>
 
+    <script src="media.js"></script>
+
+
 </body>
+
 </html>

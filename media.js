@@ -690,82 +690,122 @@ async function loadVideos() {
 
 
 /* =========================
-   VIDEO VIEWER
+   MEDIA VIEWER FIX
 ========================= */
 
 
 function openVideoViewer(video) {
 
     const viewer =
-        document.getElementById(
-            "videoViewer"
+        document.getElementById("videoViewer");
+
+
+    if (!viewer) {
+
+        console.error(
+            "videoViewer element missing from index.html"
         );
+
+        return;
+
+    }
+
 
 
     viewer.innerHTML = `
 
-        <button class="video-exit"
-            onclick="closeVideoViewer()">
-            Exit
-        </button>
+        <div class="video-viewer-background">
 
 
-        <div class="video-player-wrapper">
-
-            <video
-                id="mainVideoPlayer"
-                class="main-video-player"
-                poster="${escapeHTML(video.thumbnail_url)}"
-                controlsList="nodownload noplaybackrate"
-                disablePictureInPicture
-                oncontextmenu="return false;"
-            >
-
-                <source
-                    src="${escapeHTML(video.video_url)}"
-                >
-
-            </video>
-
-
-            <div class="custom-video-controls">
-
-                <input
-                    id="videoProgress"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="0"
-                >
+            <div class="video-viewer-box">
 
 
                 <button
-                    id="videoPauseButton"
-                    onclick="toggleVideoPause()"
+                    class="video-exit"
+                    onclick="closeVideoViewer()"
                 >
-                    Pause
+                    ×
                 </button>
+
+
+
+                <div class="video-player-area">
+
+
+                    <video
+                        id="mainVideoPlayer"
+                        class="main-video-player"
+                        poster="${escapeHTML(video.thumbnail_url)}"
+                        controlsList="nodownload noplaybackrate nofullscreen"
+                        disablePictureInPicture
+                        playsinline
+                    >
+
+                        <source
+                            src="${escapeHTML(video.video_url)}"
+                        >
+
+                    </video>
+
+
+
+                    <div class="custom-video-controls">
+
+
+                        <input
+                            id="videoProgress"
+                            class="video-progress"
+                            type="range"
+                            min="0"
+                            max="100"
+                            value="0"
+                        >
+
+
+
+                        <button
+                            id="videoPauseButton"
+                            class="video-pause"
+                        >
+                            Pause
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="video-information">
+
+
+                    <h2>
+                        ${escapeHTML(video.title)}
+                    </h2>
+
+
+                    <p>
+                        ${escapeHTML(video.description || "")}
+                    </p>
+
+
+                    <span>
+                        Uploaded by ${escapeHTML(video.username)}
+                    </span>
+
+
+                </div>
+
 
             </div>
 
-        </div>
-
-
-
-        <div class="video-information">
-
-            <h2>
-                ${escapeHTML(video.title)}
-            </h2>
-
-
-            <p>
-                ${escapeHTML(video.description || "")}
-            </p>
 
         </div>
 
     `;
+
 
 
     viewer.style.display =
@@ -785,17 +825,54 @@ function openVideoViewer(video) {
         );
 
 
+    const pauseButton =
+        document.getElementById(
+            "videoPauseButton"
+        );
+
+
+
+    player.controls = false;
+
+
 
     player.play();
 
 
 
-    player.ontimeupdate =
-        function() {
+    pauseButton.onclick =
+        function(){
 
-            if (
-                player.duration
-            ) {
+
+            if(player.paused){
+
+                player.play();
+
+                pauseButton.textContent =
+                    "Pause";
+
+            }
+
+            else {
+
+                player.pause();
+
+                pauseButton.textContent =
+                    "Play";
+
+            }
+
+
+        };
+
+
+
+
+    player.ontimeupdate =
+        function(){
+
+
+            if(player.duration){
 
                 progress.value =
                     (
@@ -805,36 +882,61 @@ function openVideoViewer(video) {
 
             }
 
+
         };
+
 
 
 
     progress.oninput =
-        function() {
+        function(){
 
-            player.currentTime =
-                (
-                    progress.value /
-                    100
-                ) * player.duration;
+
+            if(player.duration){
+
+                player.currentTime =
+                    (
+                        progress.value /
+                        100
+                    )
+                    *
+                    player.duration;
+
+            }
+
 
         };
 
 
 
-    // Disable right click
 
     player.oncontextmenu =
-        function() {
+        function(){
 
             return false;
 
         };
 
 
+
+    player.addEventListener(
+        "ratechange",
+        function(){
+
+            player.playbackRate = 1;
+
+        }
+    );
+
+
+
 }
 
-function closeVideoViewer() {
+
+
+
+
+function closeVideoViewer(){
 
 
     const viewer =
@@ -843,39 +945,568 @@ function closeVideoViewer() {
         );
 
 
+    if(!viewer){
+        return;
+    }
+
+
+    const player =
+        document.getElementById(
+            "mainVideoPlayer"
+        );
+
+
+    if(player){
+
+        player.pause();
+
+    }
+
+
+
     viewer.style.display =
         "none";
 
 
-
     viewer.innerHTML =
         "";
+
 
 }
 
 
 
 
+/* =========================
+   SPACE BAR PAUSE
+========================= */
+
+
 document.addEventListener(
     "keydown",
     function(event){
 
-        if(event.code === "Space"){
 
-            const video =
-                document.getElementById(
-                    "mainVideoPlayer"
-                );
+        if(event.code !== "Space"){
+            return;
+        }
 
-            if(video){
 
-                event.preventDefault();
 
-                toggleVideoPause();
+        const player =
+            document.getElementById(
+                "mainVideoPlayer"
+            );
+
+
+
+        if(player){
+
+
+            event.preventDefault();
+
+
+
+            if(player.paused){
+
+                player.play();
 
             }
 
+            else {
+
+                player.pause();
+
+            }
+
+
         }
+
 
     }
 );
+
+
+
+
+/* =========================
+   CLOSE WHEN CLICKING OUTSIDE
+========================= */
+
+
+window.addEventListener(
+    "click",
+    function(event){
+
+
+        const viewer =
+            document.getElementById(
+                "videoViewer"
+            );
+
+
+        if(
+            viewer &&
+            event.target === viewer
+        ){
+
+            closeVideoViewer();
+
+        }
+
+
+    }
+);
+
+/* =========================
+   YOUTUBE STYLE VIDEO PLAYER
+========================= */
+
+const videoPlayer =
+    document.getElementById("mainVideoPlayer");
+
+const playPauseButton =
+    document.getElementById("playPauseButton");
+
+const videoBigPlay =
+    document.getElementById("videoBigPlay");
+
+const videoTime =
+    document.getElementById("videoTime");
+
+const videoProgress =
+    document.getElementById("videoProgress");
+
+const videoProgressContainer =
+    document.getElementById("videoProgressContainer");
+
+const muteButton =
+    document.getElementById("muteButton");
+
+const volumeSlider =
+    document.getElementById("volumeSlider");
+
+const speedButton =
+    document.getElementById("speedButton");
+
+const fullscreenButton =
+    document.getElementById("fullscreenButton");
+
+const youtubeControls =
+    document.querySelector(".youtube-controls");
+
+
+/* =========================
+   TIME
+========================= */
+
+function formatVideoTime(seconds) {
+
+    if (
+        !Number.isFinite(seconds) ||
+        seconds < 0
+    ) {
+        return "0:00";
+    }
+
+    seconds = Math.floor(seconds);
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const remainingSeconds =
+        seconds % 60;
+
+    return (
+        minutes +
+        ":" +
+        remainingSeconds
+            .toString()
+            .padStart(2, "0")
+    );
+}
+
+
+function updateVideoTime() {
+
+    if (!videoPlayer || !videoTime) {
+        return;
+    }
+
+    videoTime.textContent =
+        formatVideoTime(
+            videoPlayer.currentTime
+        ) +
+        " / " +
+        formatVideoTime(
+            videoPlayer.duration
+        );
+
+    if (
+        videoPlayer.duration &&
+        Number.isFinite(videoPlayer.duration)
+    ) {
+
+        const percent =
+            (
+                videoPlayer.currentTime /
+                videoPlayer.duration
+            ) * 100;
+
+        videoProgress.style.width =
+            percent + "%";
+    }
+}
+
+
+/* =========================
+   PLAY / PAUSE
+========================= */
+
+function updatePlayButton() {
+
+    if (!videoPlayer) {
+        return;
+    }
+
+    if (videoPlayer.paused) {
+
+        playPauseButton.textContent = "▶";
+
+        videoBigPlay.classList.remove(
+            "hidden"
+        );
+
+    } else {
+
+        playPauseButton.textContent = "❚❚";
+
+        videoBigPlay.classList.add(
+            "hidden"
+        );
+    }
+}
+
+
+function toggleVideoPlay() {
+
+    if (!videoPlayer) {
+        return;
+    }
+
+    if (videoPlayer.paused) {
+
+        videoPlayer.play();
+
+    } else {
+
+        videoPlayer.pause();
+    }
+}
+
+
+if (playPauseButton) {
+
+    playPauseButton.addEventListener(
+        "click",
+        toggleVideoPlay
+    );
+}
+
+
+if (videoBigPlay) {
+
+    videoBigPlay.addEventListener(
+        "click",
+        toggleVideoPlay
+    );
+}
+
+
+if (videoPlayer) {
+
+    videoPlayer.addEventListener(
+        "play",
+        updatePlayButton
+    );
+
+    videoPlayer.addEventListener(
+        "pause",
+        updatePlayButton
+    );
+
+    videoPlayer.addEventListener(
+        "timeupdate",
+        updateVideoTime
+    );
+
+    videoPlayer.addEventListener(
+        "loadedmetadata",
+        updateVideoTime
+    );
+
+    videoPlayer.addEventListener(
+        "durationchange",
+        updateVideoTime
+    );
+}
+
+
+/* =========================
+   PROGRESS BAR
+========================= */
+
+if (videoProgressContainer) {
+
+    videoProgressContainer.addEventListener(
+        "click",
+        function(event) {
+
+            if (
+                !videoPlayer ||
+                !videoPlayer.duration
+            ) {
+                return;
+            }
+
+            const rect =
+                videoProgressContainer.getBoundingClientRect();
+
+            const clickPosition =
+                event.clientX - rect.left;
+
+            const percentage =
+                clickPosition / rect.width;
+
+            videoPlayer.currentTime =
+                percentage *
+                videoPlayer.duration;
+        }
+    );
+}
+
+
+/* =========================
+   VOLUME
+========================= */
+
+if (volumeSlider) {
+
+    volumeSlider.addEventListener(
+        "input",
+        function() {
+
+            videoPlayer.volume =
+                Number(this.value);
+
+            videoPlayer.muted =
+                videoPlayer.volume === 0;
+
+            updateMuteButton();
+        }
+    );
+}
+
+
+function updateMuteButton() {
+
+    if (!videoPlayer || !muteButton) {
+        return;
+    }
+
+    if (
+        videoPlayer.muted ||
+        videoPlayer.volume === 0
+    ) {
+
+        muteButton.textContent = "🔇";
+
+    } else if (
+        videoPlayer.volume < 0.5
+    ) {
+
+        muteButton.textContent = "🔉";
+
+    } else {
+
+        muteButton.textContent = "🔊";
+    }
+}
+
+
+if (muteButton) {
+
+    muteButton.addEventListener(
+        "click",
+        function() {
+
+            videoPlayer.muted =
+                !videoPlayer.muted;
+
+            updateMuteButton();
+        }
+    );
+}
+
+
+/* =========================
+   PLAYBACK SPEED
+========================= */
+
+const playbackSpeeds = [
+    1,
+    1.25,
+    1.5,
+    1.75,
+    2
+];
+
+let currentSpeedIndex = 0;
+
+
+if (speedButton) {
+
+    speedButton.addEventListener(
+        "click",
+        function() {
+
+            currentSpeedIndex++;
+
+            if (
+                currentSpeedIndex >=
+                playbackSpeeds.length
+            ) {
+                currentSpeedIndex = 0;
+            }
+
+            const speed =
+                playbackSpeeds[
+                    currentSpeedIndex
+                ];
+
+            videoPlayer.playbackRate =
+                speed;
+
+            speedButton.textContent =
+                speed + "x";
+        }
+    );
+}
+
+
+/* =========================
+   FULLSCREEN
+========================= */
+
+if (fullscreenButton) {
+
+    fullscreenButton.addEventListener(
+        "click",
+        function() {
+
+            const player =
+                document.querySelector(
+                    ".youtube-video-wrapper"
+                );
+
+            if (
+                !document.fullscreenElement
+            ) {
+
+                if (
+                    player.requestFullscreen
+                ) {
+                    player.requestFullscreen();
+                }
+
+            } else {
+
+                document.exitFullscreen();
+            }
+        }
+    );
+}
+
+
+/* =========================
+   VIDEO CLICK
+========================= */
+
+if (videoPlayer) {
+
+    videoPlayer.addEventListener(
+        "click",
+        toggleVideoPlay
+    );
+}
+
+
+/* =========================
+   HIDE CONTROLS
+========================= */
+
+let controlsTimeout;
+
+
+function showVideoControls() {
+
+    if (!youtubeControls) {
+        return;
+    }
+
+    youtubeControls.classList.remove(
+        "hidden"
+    );
+
+    clearTimeout(
+        controlsTimeout
+    );
+
+    if (
+        videoPlayer &&
+        !videoPlayer.paused
+    ) {
+
+        controlsTimeout =
+            setTimeout(
+                function() {
+
+                    youtubeControls.classList.add(
+                        "hidden"
+                    );
+
+                },
+                2500
+            );
+    }
+}
+
+
+if (videoPlayer) {
+
+    videoPlayer.addEventListener(
+        "mousemove",
+        showVideoControls
+    );
+
+    videoPlayer.addEventListener(
+        "mouseenter",
+        showVideoControls
+    );
+
+    videoPlayer.addEventListener(
+        "play",
+        showVideoControls
+    );
+
+    videoPlayer.addEventListener(
+        "pause",
+        function() {
+
+            youtubeControls.classList.remove(
+                "hidden"
+            );
+
+        }
+    );
+}
