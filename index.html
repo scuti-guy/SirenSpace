@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -12,20 +10,17 @@
 
     <title>SirenSpace</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <link
         rel="stylesheet"
         href="style.css"
     >
-
 </head>
-
 
 <body>
 
-
-    <!-- HEADER -->
+    <!-- =========================
+         HEADER
+    ========================== -->
 
     <header class="site-header">
 
@@ -33,8 +28,9 @@
             SirenSpace
         </div>
 
-
         <div class="account-area">
+
+            <span id="accountInfo"></span>
 
             <button
                 id="loginButton"
@@ -43,7 +39,6 @@
                 Login
             </button>
 
-
             <button
                 id="signupButton"
                 onclick="showSignup()"
@@ -51,16 +46,10 @@
                 Sign Up
             </button>
 
-
-            <span
-                id="accountInfo"
-                style="display:none;"
-            ></span>
-
-
             <button
                 id="logoutButton"
                 onclick="logout()"
+                style="display:none;"
             >
                 Logout
             </button>
@@ -70,24 +59,24 @@
     </header>
 
 
-
-    <!-- NAVIGATION -->
+    <!-- =========================
+         NAVIGATION
+    ========================== -->
 
     <nav class="site-navigation">
 
         <button
+            id="postsTab"
             class="nav-tab active"
-            data-page="posts"
-            onclick="switchPage('posts')"
+            onclick="switchPage('postsPage')"
         >
             Posts
         </button>
 
-
         <button
+            id="mediaTab"
             class="nav-tab"
-            data-page="media"
-            onclick="switchPage('media')"
+            onclick="switchPage('mediaPage')"
         >
             Media
         </button>
@@ -95,389 +84,384 @@
     </nav>
 
 
+    <!-- =========================
+         POSTS PAGE
+    ========================== -->
 
-    <!-- MAIN -->
+    <main
+        id="postsPage"
+        class="page active"
+    >
 
-    <main class="site-main">
+        <div class="page-top-bar">
 
+            <input
+                id="postSearch"
+                class="page-search"
+                type="text"
+                placeholder="Search posts..."
+            >
 
-        <!-- POSTS -->
+            <button
+                class="page-action-button post-message-button"
+                onclick="openCreatePost()"
+            >
+                Post Message
+            </button>
 
-        <section
-            id="postsPage"
-            class="page active"
-            data-page="posts"
-        >
+        </div>
 
-            <div class="page-top-bar">
-
-                <input
-                    type="text"
-                    class="page-search"
-                    placeholder="Search posts..."
-                >
-
-
-                <button
-                    class="page-action-button post-message-button"
-                    onclick="openCreatePost()"
-                >
-                    Post Message
-                </button>
-
-            </div>
-
-
-            <div id="postsContainer"></div>
-
-        </section>
-
-
-
-        <!-- MEDIA -->
-
-        <section
-            id="mediaPage"
-            class="page"
-            data-page="media"
-        >
-
-            <div class="page-top-bar">
-
-                <input
-                    type="text"
-                    class="page-search"
-                    placeholder="Search media..."
-                >
-
-
-                <button
-                    class="page-action-button media-upload-button"
-                    onclick="openMediaUpload()"
-                >
-                    Upload
-                </button>
-
-            </div>
-
-
-            <div
-                id="mediaContainer"
-                class="media-container"
-            ></div>
-
-        </section>
+        <div
+            id="postsContainer"
+            class="posts-container"
+        ></div>
 
     </main>
 
 
+    <!-- =========================
+         MEDIA PAGE
+    ========================== -->
 
-    <!-- CREATE POST MODAL -->
+    <main
+        id="mediaPage"
+        class="page"
+    >
+
+        <div class="page-top-bar">
+
+            <input
+                id="mediaSearch"
+                class="page-search"
+                type="text"
+                placeholder="Search media..."
+            >
+
+            <button
+                class="page-action-button media-upload-button"
+                onclick="openMediaUpload()"
+            >
+                Upload
+            </button>
+
+        </div>
+
+        <div
+            id="mediaContainer"
+            class="media-container"
+        ></div>
+
+    </main>
+
+
+    <!-- =========================
+         CREATE POST MODAL
+    ========================== -->
 
     <div
         id="createPostModal"
         class="modal"
+        style="display:none;"
     >
 
         <div class="modal-content">
 
-
             <button
-                class="close-button"
+                class="modal-close"
                 onclick="closeCreatePost()"
             >
                 ×
             </button>
 
-
             <h2>
                 Post Message
             </h2>
 
-
             <textarea
                 id="postContent"
-                placeholder="What's on your mind?"
+                placeholder="Write something..."
             ></textarea>
 
+            <label for="postFile">
+                Upload media
+            </label>
 
             <input
-                type="file"
                 id="postFile"
+                type="file"
                 accept="image/*,video/*,audio/*"
-                onchange="handlePostFile(this)"
+                onchange="handlePostFile(event)"
             >
 
-
             <div
-                id="selectedFile"
+                id="selectedPostFile"
                 class="selected-file"
             ></div>
 
-
             <div
                 id="postError"
-                class="error-message"
+                class="form-error"
             ></div>
 
-
             <button
-                class="post-submit-button"
+                class="modal-submit-button"
                 onclick="createPost()"
             >
                 Send
             </button>
-
 
         </div>
 
     </div>
 
 
-
-    <!-- MEDIA UPLOAD MODAL -->
+    <!-- =========================
+         MEDIA UPLOAD MODAL
+    ========================== -->
 
     <div
         id="mediaUploadModal"
         class="modal"
+        style="display:none;"
     >
 
         <div class="modal-content">
 
-
             <button
-                class="close-button"
+                class="modal-close"
                 onclick="closeMediaUpload()"
             >
                 ×
             </button>
 
-
             <h2>
                 Upload Video
             </h2>
 
+            <label for="mediaTitle">
+                Title
+            </label>
 
             <input
-                type="text"
                 id="mediaTitle"
+                type="text"
                 placeholder="Video title"
-                maxlength="100"
             >
 
+            <label for="mediaDescription">
+                Description
+            </label>
 
             <textarea
                 id="mediaDescription"
-                placeholder="Description"
-                maxlength="2000"
+                placeholder="Video description..."
             ></textarea>
 
-
-            <label>
+            <label for="mediaVideo">
                 Video
             </label>
 
-
             <input
-                type="file"
                 id="mediaVideo"
+                type="file"
                 accept=".mp4,.mov,.avi"
-                onchange="handleMediaVideo(this)"
+                onchange="handleMediaVideo(event)"
             >
-
 
             <div
                 id="selectedVideo"
                 class="selected-file"
             ></div>
 
-
-            <label>
+            <label for="mediaThumbnail">
                 Thumbnail
             </label>
 
-
             <input
-                type="file"
                 id="mediaThumbnail"
+                type="file"
                 accept=".png,.jpg,.jpeg,.webp"
-                onchange="handleMediaThumbnail(this)"
+                onchange="handleMediaThumbnail(event)"
             >
-
 
             <div
                 id="selectedThumbnail"
                 class="selected-file"
             ></div>
 
-
             <div
                 id="mediaUploadError"
-                class="error-message"
+                class="form-error"
             ></div>
 
-
             <button
-                class="post-submit-button"
+                class="modal-submit-button"
                 onclick="uploadMedia()"
             >
                 Upload
             </button>
 
-
         </div>
 
     </div>
 
 
+    <!-- =========================
+         VIDEO VIEWER
+    ========================== -->
 
     <div
-    id="videoViewer"
-    class="video-viewer"
-    style="display:none;"
->
-    <button
-        class="video-exit-button"
-        onclick="closeVideoViewer()"
+        id="videoViewer"
+        class="video-viewer"
+        style="display:none;"
     >
-        Exit
-    </button>
 
-    <div class="youtube-player">
+        <button
+            class="video-exit-button"
+            onclick="closeVideoViewer()"
+        >
+            Exit
+        </button>
 
-        <div class="youtube-video-wrapper">
-            <video
-                id="mainVideoPlayer"
-                playsinline
-            ></video>
+        <div class="youtube-player">
 
-            <div
-                id="videoBigPlay"
-                class="video-big-play"
-            >
-                ▶
-            </div>
+            <div class="youtube-video-wrapper">
 
-            <div class="youtube-controls">
+                <video
+                    id="mainVideoPlayer"
+                    playsinline
+                ></video>
 
                 <div
-                    id="videoProgressContainer"
-                    class="video-progress-container"
+                    id="videoBigPlay"
+                    class="video-big-play"
                 >
-                    <div
-                        id="videoProgress"
-                        class="video-progress"
-                    ></div>
+                    ▶
                 </div>
 
-                <div class="youtube-control-row">
+                <div class="youtube-controls">
 
-                    <button
-                        id="playPauseButton"
-                        class="player-button"
+                    <div
+                        id="videoProgressContainer"
+                        class="video-progress-container"
                     >
-                        ▶
-                    </button>
+                        <div
+                            id="videoProgress"
+                            class="video-progress"
+                        ></div>
+                    </div>
 
-                    <span
-                        id="videoTime"
-                        class="video-time"
-                    >
-                        0:00 / 0:00
-                    </span>
-
-                    <div class="volume-container">
+                    <div class="youtube-control-row">
 
                         <button
-                            id="muteButton"
+                            id="playPauseButton"
                             class="player-button"
                         >
-                            🔊
+                            ▶
                         </button>
 
-                        <input
-                            id="volumeSlider"
-                            class="volume-slider"
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value="1"
+                        <span
+                            id="videoTime"
+                            class="video-time"
                         >
+                            0:00 / 0:00
+                        </span>
+
+                        <div class="volume-container">
+
+                            <button
+                                id="muteButton"
+                                class="player-button"
+                            >
+                                🔊
+                            </button>
+
+                            <input
+                                id="volumeSlider"
+                                class="volume-slider"
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value="1"
+                            >
+
+                        </div>
+
+                        <button
+                            id="speedButton"
+                            class="player-button"
+                        >
+                            1x
+                        </button>
+
+                        <button
+                            id="fullscreenButton"
+                            class="player-button"
+                        >
+                            ⛶
+                        </button>
 
                     </div>
 
-                    <button
-                        id="speedButton"
-                        class="player-button"
-                    >
-                        1x
-                    </button>
-
-                    <button
-                        id="fullscreenButton"
-                        class="player-button"
-                    >
-                        ⛶
-                    </button>
-
                 </div>
 
             </div>
+
+            <h2
+                id="viewerTitle"
+                class="viewer-title"
+            ></h2>
+
+            <div class="video-buttons">
+
+                <button id="likeButton">
+                    Like 0
+                </button>
+
+                <button id="dislikeButton">
+                    Dislike 0
+                </button>
+
+                <span id="viewCount">
+                    Views: 0
+                </span>
+
+            </div>
+
+            <div class="viewer-uploader">
+
+                <img
+                    id="viewerPoster"
+                    alt=""
+                >
+
+            </div>
+
+            <p
+                id="viewerDescription"
+                class="viewer-description"
+            ></p>
+
         </div>
-
-        <h2
-            id="viewerTitle"
-            class="viewer-title"
-        ></h2>
-
-        <div class="video-buttons">
-
-            <button id="likeButton">
-                Like 0
-            </button>
-
-            <button id="dislikeButton">
-                Dislike 0
-            </button>
-
-            <span id="viewCount">
-                Views: 0
-            </span>
-
-        </div>
-
-        <div class="viewer-uploader">
-
-            <img
-                id="viewerPoster"
-                alt=""
-            >
-
-        </div>
-
-        <p
-            id="viewerDescription"
-            class="viewer-description"
-        ></p>
 
     </div>
-</div>
 
 
-
-    <!-- ACCOUNT MODAL -->
+    <!-- =========================
+         ACCOUNT MODAL
+    ========================== -->
 
     <div
         id="accountModal"
         class="modal"
+        style="display:none;"
     >
 
         <div class="modal-content">
 
-
             <button
-                class="close-button"
+                class="modal-close"
                 onclick="closeAccount()"
             >
                 ×
@@ -492,37 +476,31 @@
                     Login
                 </h2>
 
-
                 <input
-                    type="text"
                     id="loginUsername"
+                    type="text"
                     placeholder="Username"
                 >
 
-
                 <input
-                    type="password"
                     id="loginPassword"
+                    type="password"
                     placeholder="Password"
                 >
 
-
                 <div
-                    id="accountError"
-                    class="error-message"
+                    id="loginError"
+                    class="form-error"
                 ></div>
 
-
                 <button
-                    class="post-submit-button"
+                    class="modal-submit-button"
                     onclick="login()"
                 >
                     Login
                 </button>
 
-
                 <p>
-
                     Don't have an account?
 
                     <button
@@ -531,11 +509,9 @@
                     >
                         Sign Up
                     </button>
-
                 </p>
 
             </div>
-
 
 
             <!-- SIGN UP -->
@@ -549,37 +525,37 @@
                     Sign Up
                 </h2>
 
-
                 <input
-                    type="text"
                     id="signupUsername"
+                    type="text"
                     placeholder="Username"
                 >
 
-
                 <input
-                    type="password"
                     id="signupPassword"
+                    type="password"
                     placeholder="Password"
                 >
 
+                <input
+                    id="signupPasswordConfirm"
+                    type="password"
+                    placeholder="Confirm password"
+                >
 
                 <div
-                    id="accountError"
-                    class="error-message"
+                    id="signupError"
+                    class="form-error"
                 ></div>
 
-
                 <button
-                    class="post-submit-button"
+                    class="modal-submit-button"
                     onclick="signup()"
                 >
                     Sign Up
                 </button>
 
-
                 <p>
-
                     Already have an account?
 
                     <button
@@ -588,19 +564,20 @@
                     >
                         Login
                     </button>
-
                 </p>
 
             </div>
-
 
         </div>
 
     </div>
 
 
+    <!-- =========================
+         SCRIPTS
+    ========================== -->
 
-    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script src="supabase.js"></script>
 
@@ -608,7 +585,5 @@
 
     <script src="media.js"></script>
 
-
 </body>
-
 </html>
