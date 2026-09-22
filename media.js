@@ -14,9 +14,11 @@ function openMediaUpload() {
             "mediaUploadModal"
         );
 
-    if (modal) {
-        modal.style.display = "block";
+    if (!modal) {
+        return;
     }
+
+    modal.style.display = "flex";
 
     const error =
         document.getElementById(
@@ -63,16 +65,18 @@ function handleMediaVideo(input) {
             "mediaUploadError"
         );
 
-
-    error.textContent = "";
+    if (error) {
+        error.textContent = "";
+    }
 
 
     if (!file) {
 
-        label.textContent = "";
+        if (label) {
+            label.textContent = "";
+        }
 
         return;
-
     }
 
 
@@ -94,18 +98,23 @@ function handleMediaVideo(input) {
 
         input.value = "";
 
-        error.textContent =
-            "Videos must be MP4, MOV, or AVI.";
+        if (error) {
+            error.textContent =
+                "Videos must be MP4, MOV, or AVI.";
+        }
 
-        label.textContent = "";
+        if (label) {
+            label.textContent = "";
+        }
 
         return;
-
     }
 
 
-    label.textContent =
-        "Selected video: " + file.name;
+    if (label) {
+        label.textContent =
+            "Selected video: " + file.name;
+    }
 
 }
 
@@ -129,15 +138,18 @@ function handleMediaThumbnail(input) {
         );
 
 
-    error.textContent = "";
+    if (error) {
+        error.textContent = "";
+    }
 
 
     if (!file) {
 
-        label.textContent = "";
+        if (label) {
+            label.textContent = "";
+        }
 
         return;
-
     }
 
 
@@ -160,18 +172,23 @@ function handleMediaThumbnail(input) {
 
         input.value = "";
 
-        error.textContent =
-            "Thumbnail must be PNG, JPG, JPEG, or WebP.";
+        if (error) {
+            error.textContent =
+                "Thumbnail must be PNG, JPG, JPEG, or WebP.";
+        }
 
-        label.textContent = "";
+        if (label) {
+            label.textContent = "";
+        }
 
         return;
-
     }
 
 
-    label.textContent =
-        "Selected thumbnail: " + file.name;
+    if (label) {
+        label.textContent =
+            "Selected thumbnail: " + file.name;
+    }
 
 }
 
@@ -182,43 +199,45 @@ function handleMediaThumbnail(input) {
    AUTOMATIC THUMBNAIL
 ========================= */
 
-
 function generateVideoThumbnail(file) {
 
     return new Promise((resolve, reject) => {
 
-
         const video =
-            document.createElement(
-                "video"
-            );
-
+            document.createElement("video");
 
         const url =
-            URL.createObjectURL(
-                file
-            );
-
+            URL.createObjectURL(file);
 
         video.src =
             url;
 
-
         video.muted =
             true;
 
-
         video.playsInline =
             true;
-
 
         video.preload =
             "metadata";
 
 
-
         video.onloadedmetadata =
             function() {
+
+                if (
+                    !video.videoWidth ||
+                    !video.videoHeight
+                ) {
+
+                    URL.revokeObjectURL(url);
+
+                    reject(
+                        "Could not read video dimensions."
+                    );
+
+                    return;
+                }
 
 
                 video.currentTime =
@@ -226,35 +245,37 @@ function generateVideoThumbnail(file) {
                         1,
                         video.duration / 2
                     );
-
-
             };
-
 
 
         video.onseeked =
             function() {
 
-
                 const canvas =
-                    document.createElement(
-                        "canvas"
-                    );
+                    document.createElement("canvas");
 
 
                 canvas.width =
                     video.videoWidth;
 
-
                 canvas.height =
                     video.videoHeight;
 
 
-
                 const ctx =
-                    canvas.getContext(
-                        "2d"
+                    canvas.getContext("2d");
+
+
+                if (!ctx) {
+
+                    URL.revokeObjectURL(url);
+
+                    reject(
+                        "Could not create thumbnail."
                     );
+
+                    return;
+                }
 
 
                 ctx.drawImage(
@@ -264,21 +285,25 @@ function generateVideoThumbnail(file) {
                 );
 
 
-
                 canvas.toBlob(
-                    blob => {
+                    function(blob) {
+
+                        URL.revokeObjectURL(url);
 
 
-                        URL.revokeObjectURL(
-                            url
-                        );
+                        if (!blob) {
+
+                            reject(
+                                "Could not create thumbnail."
+                            );
+
+                            return;
+                        }
 
 
                         resolve(
                             new File(
-                                [
-                                    blob
-                                ],
+                                [blob],
                                 "thumbnail.jpg",
                                 {
                                     type:
@@ -287,15 +312,11 @@ function generateVideoThumbnail(file) {
                             )
                         );
 
-
                     },
                     "image/jpeg",
-                    .85
+                    0.85
                 );
-
-
             };
-
 
 
         video.onerror =
@@ -306,9 +327,7 @@ function generateVideoThumbnail(file) {
                 reject(
                     "Thumbnail failed."
                 );
-
             };
-
 
     });
 
@@ -322,258 +341,320 @@ function generateVideoThumbnail(file) {
    UPLOAD MEDIA
 ========================= */
 
-
 async function uploadMedia() {
 
+    try {
 
-    const {
-        data
-    } =
-    await supabaseClient.auth.getUser();
+        const {
+            data,
+            error: userError
+        } =
+        await supabaseClient.auth.getUser();
 
 
+        if (userError) {
+            throw userError;
+        }
 
-    const user =
-        data.user;
 
+        const user =
+            data.user;
 
 
-    const errorBox =
-        document.getElementById(
-            "mediaUploadError"
-        );
-
-
-
-    errorBox.textContent = "";
-
-
-
-    if (!user) {
-
-        errorBox.textContent =
-            "You must be logged in.";
-
-        return;
-
-    }
-
-
-
-    const title =
-        document.getElementById(
-            "mediaTitle"
-        ).value.trim();
-
-
-
-    const description =
-        document.getElementById(
-            "mediaDescription"
-        ).value.trim();
-
-
-
-    const videoInput =
-        document.getElementById(
-            "mediaVideo"
-        );
-
-
-
-    const thumbnailInput =
-        document.getElementById(
-            "mediaThumbnail"
-        );
-
-
-
-    let videoFile =
-        videoInput.files[0];
-
-
-
-    let thumbnailFile =
-        thumbnailInput.files[0];
-
-
-
-    if (!title || !videoFile) {
-
-        errorBox.textContent =
-            "Title and video are required.";
-
-        return;
-
-    }
-
-
-
-    if (!thumbnailFile) {
-
-        errorBox.textContent =
-            "Generating thumbnail...";
-
-
-        thumbnailFile =
-            await generateVideoThumbnail(
-                videoFile
-            );
-
-    }
-
-
-
-    const id =
-        crypto.randomUUID();
-
-
-
-    const extension =
-        videoFile.name
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-
-    const videoPath =
-        `videos/${user.id}/${id}.${extension}`;
-
-
-
-    const thumbnailPath =
-        `thumbnails/${user.id}/${id}.jpg`;
-
-
-
-
-    errorBox.textContent =
-        "Uploading video...";
-
-
-
-    const videoUpload =
-        await supabaseClient.storage
-            .from("post-media")
-            .upload(
-                videoPath,
-                videoFile
+        const errorBox =
+            document.getElementById(
+                "mediaUploadError"
             );
 
 
-
-    if (videoUpload.error) {
-
-        errorBox.textContent =
-            videoUpload.error.message;
-
-        return;
-
-    }
+        if (errorBox) {
+            errorBox.textContent = "";
+        }
 
 
+        if (!user) {
+
+            if (errorBox) {
+                errorBox.textContent =
+                    "You must be logged in.";
+            }
+
+            return;
+        }
 
 
-    errorBox.textContent =
-        "Uploading thumbnail...";
-
-
-
-    const thumbUpload =
-        await supabaseClient.storage
-            .from("post-media")
-            .upload(
-                thumbnailPath,
-                thumbnailFile
+        const titleInput =
+            document.getElementById(
+                "mediaTitle"
             );
 
 
-
-    if (thumbUpload.error) {
-
-        errorBox.textContent =
-            thumbUpload.error.message;
-
-        return;
-
-    }
+        const descriptionInput =
+            document.getElementById(
+                "mediaDescription"
+            );
 
 
+        const videoInput =
+            document.getElementById(
+                "mediaVideo"
+            );
 
 
+        const thumbnailInput =
+            document.getElementById(
+                "mediaThumbnail"
+            );
 
-    const videoURL =
-        supabaseClient.storage
-            .from("post-media")
-            .getPublicUrl(
-                videoPath
+
+        if (
+            !titleInput ||
+            !descriptionInput ||
+            !videoInput ||
+            !thumbnailInput
+        ) {
+
+            if (errorBox) {
+                errorBox.textContent =
+                    "Media upload form is missing.";
+            }
+
+            return;
+        }
+
+
+        const title =
+            titleInput.value.trim();
+
+
+        const description =
+            descriptionInput.value.trim();
+
+
+        const videoFile =
+            videoInput.files[0];
+
+
+        let thumbnailFile =
+            thumbnailInput.files[0];
+
+
+        if (!title || !videoFile) {
+
+            if (errorBox) {
+                errorBox.textContent =
+                    "Title and video are required.";
+            }
+
+            return;
+        }
+
+
+        if (!thumbnailFile) {
+
+            if (errorBox) {
+                errorBox.textContent =
+                    "Generating thumbnail...";
+            }
+
+
+            thumbnailFile =
+                await generateVideoThumbnail(
+                    videoFile
+                );
+        }
+
+
+        const id =
+            crypto.randomUUID();
+
+
+        const extension =
+            videoFile.name
+                .split(".")
+                .pop()
+                .toLowerCase();
+
+
+        const videoPath =
+            `videos/${user.id}/${id}.${extension}`;
+
+
+        const thumbnailPath =
+            `thumbnails/${user.id}/${id}.jpg`;
+
+
+        if (errorBox) {
+            errorBox.textContent =
+                "Uploading video...";
+        }
+
+
+        const videoUpload =
+            await supabaseClient.storage
+                .from("post-media")
+                .upload(
+                    videoPath,
+                    videoFile
+                );
+
+
+        if (videoUpload.error) {
+            throw videoUpload.error;
+        }
+
+
+        if (errorBox) {
+            errorBox.textContent =
+                "Uploading thumbnail...";
+        }
+
+
+        const thumbUpload =
+            await supabaseClient.storage
+                .from("post-media")
+                .upload(
+                    thumbnailPath,
+                    thumbnailFile
+                );
+
+
+        if (thumbUpload.error) {
+            throw thumbUpload.error;
+        }
+
+
+        const videoURL =
+            supabaseClient.storage
+                .from("post-media")
+                .getPublicUrl(
+                    videoPath
+                )
+                .data
+                .publicUrl;
+
+
+        const thumbnailURL =
+            supabaseClient.storage
+                .from("post-media")
+                .getPublicUrl(
+                    thumbnailPath
+                )
+                .data
+                .publicUrl;
+
+
+        const {
+            data: profile,
+            error: profileError
+        } =
+        await supabaseClient
+            .from("profiles")
+            .select("username")
+            .eq(
+                "id",
+                user.id
             )
-            .data
-            .publicUrl;
+            .single();
 
 
-
-    const thumbnailURL =
-        supabaseClient.storage
-            .from("post-media")
-            .getPublicUrl(
-                thumbnailPath
-            )
-            .data
-            .publicUrl;
+        if (profileError) {
+            throw profileError;
+        }
 
 
+        const {
+            error: insertError
+        } =
+        await supabaseClient
+            .from("videos")
+            .insert({
+
+                user_id:
+                    user.id,
+
+                username:
+                    profile.username,
+
+                title:
+                    title,
+
+                description:
+                    description || null,
+
+                video_url:
+                    videoURL,
+
+                thumbnail_url:
+                    thumbnailURL,
+
+                video_format:
+                    extension
+
+            });
 
 
-
-    const {
-        data: profile
-    } =
-    await supabaseClient
-        .from("profiles")
-        .select("username")
-        .eq(
-            "id",
-            user.id
-        )
-        .single();
+        if (insertError) {
+            throw insertError;
+        }
 
 
+        closeMediaUpload();
 
 
-
-    await supabaseClient
-        .from("videos")
-        .insert({
-
-            user_id:
-                user.id,
-
-            username:
-                profile.username,
-
-            title:
-                title,
-
-            description:
-                description || null,
-
-            video_url:
-                videoURL,
-
-            thumbnail_url:
-                thumbnailURL
-
-        });
+        titleInput.value = "";
+        descriptionInput.value = "";
+        videoInput.value = "";
+        thumbnailInput.value = "";
 
 
+        const selectedVideo =
+            document.getElementById(
+                "selectedVideo"
+            );
+
+        if (selectedVideo) {
+            selectedVideo.textContent = "";
+        }
 
 
+        const selectedThumbnail =
+            document.getElementById(
+                "selectedThumbnail"
+            );
 
-    closeMediaUpload();
+        if (selectedThumbnail) {
+            selectedThumbnail.textContent = "";
+        }
 
-    loadVideos();
+
+        await loadVideos();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Media upload error:",
+            error
+        );
+
+
+        const errorBox =
+            document.getElementById(
+                "mediaUploadError"
+            );
+
+
+        if (errorBox) {
+
+            errorBox.textContent =
+                error.message ||
+                String(error);
+
+        }
+
+    }
 
 }
 
@@ -585,9 +666,7 @@ async function uploadMedia() {
    LOAD MEDIA
 ========================= */
 
-
 async function loadVideos() {
-
 
     const container =
         document.getElementById(
@@ -600,88 +679,103 @@ async function loadVideos() {
     }
 
 
-
     container.innerHTML =
         "Loading videos...";
 
 
+    try {
 
-    const {
-        data,
-        error
-    } =
-    await supabaseClient
-        .from("videos")
-        .select("*")
-        .order(
-            "created_at",
-            {
-                ascending:false
-            }
-        );
-
-
-
-    if (error) {
-
-        container.textContent =
-            error.message;
-
-        return;
-
-    }
-
-
-
-    container.innerHTML = "";
-
-
-
-    data.forEach(video => {
-
-
-        const card =
-            document.createElement(
-                "div"
+        const {
+            data,
+            error
+        } =
+        await supabaseClient
+            .from("videos")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
             );
 
 
-        card.className =
-            "media-card";
+        if (error) {
+            throw error;
+        }
 
 
-
-        card.innerHTML = `
-
-            <img
-                class="media-thumbnail"
-                src="${escapeHTML(video.thumbnail_url)}"
-            >
-
-            <div class="media-card-title">
-                ${escapeHTML(video.title)}
-            </div>
-
-        `;
+        container.innerHTML = "";
 
 
+        if (!data || data.length === 0) {
 
-        card.onclick =
-            function() {
+            container.innerHTML =
+                "<div class=\"empty-media\">No videos yet.</div>";
 
-                openVideoViewer(video);
-
-            };
-
+            return;
+        }
 
 
-        container.appendChild(
-            card
+        data.forEach(
+            function(video) {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                card.className =
+                    "media-card";
+
+
+                card.innerHTML = `
+
+                    <img
+                        class="media-thumbnail"
+                        src="${escapeHTML(video.thumbnail_url)}"
+                        alt=""
+                    >
+
+                    <div class="media-card-title">
+                        ${escapeHTML(video.title)}
+                    </div>
+
+                `;
+
+
+                card.addEventListener(
+                    "click",
+                    function() {
+
+                        openVideoViewer(video);
+
+                    }
+                );
+
+
+                container.appendChild(
+                    card
+                );
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error loading videos:",
+            error
         );
 
 
-    });
+        container.textContent =
+            "Could not load media.";
 
+    }
 
 }
 
@@ -690,14 +784,15 @@ async function loadVideos() {
 
 
 /* =========================
-   MEDIA VIEWER FIX
+   MEDIA VIEWER
 ========================= */
-
 
 function openVideoViewer(video) {
 
     const viewer =
-        document.getElementById("videoViewer");
+        document.getElementById(
+            "videoViewer"
+        );
 
 
     if (!viewer) {
@@ -707,18 +802,14 @@ function openVideoViewer(video) {
         );
 
         return;
-
     }
-
 
 
     viewer.innerHTML = `
 
         <div class="video-viewer-background">
 
-
             <div class="video-viewer-box">
-
 
                 <button
                     class="video-exit"
@@ -728,207 +819,175 @@ function openVideoViewer(video) {
                 </button>
 
 
+                <div class="youtube-player">
 
-                <div class="video-player-area">
+                    <div class="youtube-video-wrapper">
 
-
-                    <video
-                        id="mainVideoPlayer"
-                        class="main-video-player"
-                        poster="${escapeHTML(video.thumbnail_url)}"
-                        controlsList="nodownload noplaybackrate nofullscreen"
-                        disablePictureInPicture
-                        playsinline
-                    >
-
-                        <source
-                            src="${escapeHTML(video.video_url)}"
+                        <video
+                            id="mainVideoPlayer"
+                            poster="${escapeHTML(video.thumbnail_url)}"
+                            playsinline
                         >
 
-                    </video>
+                            <source
+                                src="${escapeHTML(video.video_url)}"
+                            >
+
+                        </video>
 
 
+                        <div
+                            id="videoBigPlay"
+                            class="video-big-play"
+                        >
+                            ▶
+                        </div>
 
-                    <div class="custom-video-controls">
 
-
-                        <input
-                            id="videoProgress"
-                            class="video-progress"
-                            type="range"
-                            min="0"
-                            max="100"
-                            value="0"
+                        <div
+                            class="youtube-controls"
                         >
 
+                            <div
+                                id="videoProgressContainer"
+                                class="video-progress-container"
+                            >
+
+                                <div
+                                    id="videoProgress"
+                                    class="video-progress"
+                                ></div>
+
+                            </div>
 
 
-                        <button
-                            id="videoPauseButton"
-                            class="video-pause"
-                        >
-                            Pause
-                        </button>
+                            <div
+                                class="youtube-control-row"
+                            >
 
+                                <button
+                                    id="playPauseButton"
+                                    class="player-button"
+                                >
+                                    ▶
+                                </button>
+
+
+                                <span
+                                    id="videoTime"
+                                    class="video-time"
+                                >
+                                    0:00 / 0:00
+                                </span>
+
+
+                                <div
+                                    class="volume-container"
+                                >
+
+                                    <button
+                                        id="muteButton"
+                                        class="player-button"
+                                    >
+                                        🔊
+                                    </button>
+
+
+                                    <input
+                                        id="volumeSlider"
+                                        class="volume-slider"
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.01"
+                                        value="1"
+                                    >
+
+                                </div>
+
+
+                                <button
+                                    id="speedButton"
+                                    class="player-button"
+                                >
+                                    1x
+                                </button>
+
+
+                                <button
+                                    id="fullscreenButton"
+                                    class="player-button"
+                                >
+                                    ⛶
+                                </button>
+
+                            </div>
+
+                        </div>
 
                     </div>
 
-
                 </div>
-
 
 
                 <div class="video-information">
 
-
-                    <h2>
+                    <h2 class="viewer-title">
                         ${escapeHTML(video.title)}
                     </h2>
 
 
-                    <p>
-                        ${escapeHTML(video.description || "")}
-                    </p>
+                    <div class="video-buttons">
+
+                        <button>
+                            Like
+                        </button>
 
 
-                    <span>
-                        Uploaded by ${escapeHTML(video.username)}
-                    </span>
+                        <button>
+                            Dislike
+                        </button>
 
+
+                        <span id="viewCount">
+                            0 views
+                        </span>
+
+                    </div>
+
+
+                    <div class="viewer-uploader">
+
+                        Uploaded by
+                        <strong>
+                            ${escapeHTML(video.username)}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="viewer-description">
+
+                        ${escapeHTML(
+                            video.description || ""
+                        )}
+
+                    </div>
 
                 </div>
 
-
             </div>
-
 
         </div>
 
     `;
 
 
-
     viewer.style.display =
         "block";
 
 
-
-    const player =
-        document.getElementById(
-            "mainVideoPlayer"
-        );
-
-
-    const progress =
-        document.getElementById(
-            "videoProgress"
-        );
-
-
-    const pauseButton =
-        document.getElementById(
-            "videoPauseButton"
-        );
-
-
-
-    player.controls = false;
-
-
-
-    player.play();
-
-
-
-    pauseButton.onclick =
-        function(){
-
-
-            if(player.paused){
-
-                player.play();
-
-                pauseButton.textContent =
-                    "Pause";
-
-            }
-
-            else {
-
-                player.pause();
-
-                pauseButton.textContent =
-                    "Play";
-
-            }
-
-
-        };
-
-
-
-
-    player.ontimeupdate =
-        function(){
-
-
-            if(player.duration){
-
-                progress.value =
-                    (
-                        player.currentTime /
-                        player.duration
-                    ) * 100;
-
-            }
-
-
-        };
-
-
-
-
-    progress.oninput =
-        function(){
-
-
-            if(player.duration){
-
-                player.currentTime =
-                    (
-                        progress.value /
-                        100
-                    )
-                    *
-                    player.duration;
-
-            }
-
-
-        };
-
-
-
-
-    player.oncontextmenu =
-        function(){
-
-            return false;
-
-        };
-
-
-
-    player.addEventListener(
-        "ratechange",
-        function(){
-
-            player.playbackRate = 1;
-
-        }
-    );
-
-
+    setupVideoPlayer();
 
 }
 
@@ -936,8 +995,11 @@ function openVideoViewer(video) {
 
 
 
-function closeVideoViewer(){
+/* =========================
+   CLOSE VIDEO VIEWER
+========================= */
 
+function closeVideoViewer() {
 
     const viewer =
         document.getElementById(
@@ -945,7 +1007,7 @@ function closeVideoViewer(){
         );
 
 
-    if(!viewer){
+    if (!viewer) {
         return;
     }
 
@@ -956,12 +1018,9 @@ function closeVideoViewer(){
         );
 
 
-    if(player){
-
+    if (player) {
         player.pause();
-
     }
-
 
 
     viewer.style.display =
@@ -971,8 +1030,657 @@ function closeVideoViewer(){
     viewer.innerHTML =
         "";
 
+}
+
+
+
+
+
+/* =========================
+   VIDEO PLAYER
+========================= */
+
+function setupVideoPlayer() {
+
+    const videoPlayer =
+        document.getElementById(
+            "mainVideoPlayer"
+        );
+
+
+    if (!videoPlayer) {
+        return;
+    }
+
+
+    const playPauseButton =
+        document.getElementById(
+            "playPauseButton"
+        );
+
+
+    const videoBigPlay =
+        document.getElementById(
+            "videoBigPlay"
+        );
+
+
+    const videoTime =
+        document.getElementById(
+            "videoTime"
+        );
+
+
+    const videoProgress =
+        document.getElementById(
+            "videoProgress"
+        );
+
+
+    const videoProgressContainer =
+        document.getElementById(
+            "videoProgressContainer"
+        );
+
+
+    const muteButton =
+        document.getElementById(
+            "muteButton"
+        );
+
+
+    const volumeSlider =
+        document.getElementById(
+            "volumeSlider"
+        );
+
+
+    const speedButton =
+        document.getElementById(
+            "speedButton"
+        );
+
+
+    const fullscreenButton =
+        document.getElementById(
+            "fullscreenButton"
+        );
+
+
+    const youtubeControls =
+        document.querySelector(
+            ".youtube-controls"
+        );
+
+
+
+    /* =========================
+       TIME
+    ========================= */
+
+    function formatVideoTime(seconds) {
+
+        if (
+            !Number.isFinite(seconds) ||
+            seconds < 0
+        ) {
+            return "0:00";
+        }
+
+
+        seconds =
+            Math.floor(seconds);
+
+
+        const minutes =
+            Math.floor(
+                seconds / 60
+            );
+
+
+        const remainingSeconds =
+            seconds % 60;
+
+
+        return (
+            minutes +
+            ":" +
+            remainingSeconds
+                .toString()
+                .padStart(
+                    2,
+                    "0"
+                )
+        );
+
+    }
+
+
+    function updateVideoTime() {
+
+        if (videoTime) {
+
+            videoTime.textContent =
+                formatVideoTime(
+                    videoPlayer.currentTime
+                ) +
+                " / " +
+                formatVideoTime(
+                    videoPlayer.duration
+                );
+
+        }
+
+
+        if (
+            videoProgress &&
+            videoPlayer.duration &&
+            Number.isFinite(
+                videoPlayer.duration
+            )
+        ) {
+
+            const percent =
+                (
+                    videoPlayer.currentTime /
+                    videoPlayer.duration
+                ) * 100;
+
+
+            videoProgress.style.width =
+                percent + "%";
+
+        }
+
+    }
+
+
+
+    /* =========================
+       PLAY / PAUSE
+    ========================= */
+
+    function updatePlayButton() {
+
+        if (videoPlayer.paused) {
+
+            if (playPauseButton) {
+
+                playPauseButton.textContent =
+                    "▶";
+
+            }
+
+
+            if (videoBigPlay) {
+
+                videoBigPlay.classList.remove(
+                    "hidden"
+                );
+
+            }
+
+        }
+
+        else {
+
+            if (playPauseButton) {
+
+                playPauseButton.textContent =
+                    "❚❚";
+
+            }
+
+
+            if (videoBigPlay) {
+
+                videoBigPlay.classList.add(
+                    "hidden"
+                );
+
+            }
+
+        }
+
+    }
+
+
+    function toggleVideoPlay() {
+
+        if (videoPlayer.paused) {
+
+            videoPlayer.play().catch(
+                function() {}
+            );
+
+        }
+
+        else {
+
+            videoPlayer.pause();
+
+        }
+
+    }
+
+
+    if (playPauseButton) {
+
+        playPauseButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+                toggleVideoPlay();
+
+            }
+        );
+
+    }
+
+
+    if (videoBigPlay) {
+
+        videoBigPlay.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+                toggleVideoPlay();
+
+            }
+        );
+
+    }
+
+
+    videoPlayer.addEventListener(
+        "play",
+        updatePlayButton
+    );
+
+
+    videoPlayer.addEventListener(
+        "pause",
+        updatePlayButton
+    );
+
+
+    videoPlayer.addEventListener(
+        "timeupdate",
+        updateVideoTime
+    );
+
+
+    videoPlayer.addEventListener(
+        "loadedmetadata",
+        updateVideoTime
+    );
+
+
+    videoPlayer.addEventListener(
+        "durationchange",
+        updateVideoTime
+    );
+
+
+
+    /* =========================
+       PROGRESS BAR
+    ========================= */
+
+    if (videoProgressContainer) {
+
+        videoProgressContainer.addEventListener(
+            "click",
+            function(event) {
+
+                if (
+                    !videoPlayer.duration
+                ) {
+                    return;
+                }
+
+
+                const rect =
+                    videoProgressContainer
+                        .getBoundingClientRect();
+
+
+                const clickPosition =
+                    event.clientX -
+                    rect.left;
+
+
+                const percentage =
+                    clickPosition /
+                    rect.width;
+
+
+                videoPlayer.currentTime =
+                    percentage *
+                    videoPlayer.duration;
+
+            }
+        );
+
+    }
+
+
+
+    /* =========================
+       VOLUME
+    ========================= */
+
+    function updateMuteButton() {
+
+        if (!muteButton) {
+            return;
+        }
+
+
+        if (
+            videoPlayer.muted ||
+            videoPlayer.volume === 0
+        ) {
+
+            muteButton.textContent =
+                "🔇";
+
+        }
+
+        else if (
+            videoPlayer.volume < 0.5
+        ) {
+
+            muteButton.textContent =
+                "🔉";
+
+        }
+
+        else {
+
+            muteButton.textContent =
+                "🔊";
+
+        }
+
+    }
+
+
+    if (volumeSlider) {
+
+        volumeSlider.addEventListener(
+            "input",
+            function() {
+
+                videoPlayer.volume =
+                    Number(
+                        this.value
+                    );
+
+
+                videoPlayer.muted =
+                    videoPlayer.volume === 0;
+
+
+                updateMuteButton();
+
+            }
+        );
+
+    }
+
+
+    if (muteButton) {
+
+        muteButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+
+                videoPlayer.muted =
+                    !videoPlayer.muted;
+
+
+                updateMuteButton();
+
+            }
+        );
+
+    }
+
+
+
+    /* =========================
+       PLAYBACK SPEED
+    ========================= */
+
+    const playbackSpeeds = [
+        1,
+        1.25,
+        1.5,
+        1.75,
+        2
+    ];
+
+
+    let currentSpeedIndex = 0;
+
+
+    if (speedButton) {
+
+        speedButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+
+                currentSpeedIndex++;
+
+
+                if (
+                    currentSpeedIndex >=
+                    playbackSpeeds.length
+                ) {
+
+                    currentSpeedIndex = 0;
+
+                }
+
+
+                const speed =
+                    playbackSpeeds[
+                        currentSpeedIndex
+                    ];
+
+
+                videoPlayer.playbackRate =
+                    speed;
+
+
+                speedButton.textContent =
+                    speed + "x";
+
+            }
+        );
+
+    }
+
+
+
+    /* =========================
+       FULLSCREEN
+    ========================= */
+
+    if (fullscreenButton) {
+
+        fullscreenButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+
+                const player =
+                    document.querySelector(
+                        ".youtube-video-wrapper"
+                    );
+
+
+                if (
+                    !document.fullscreenElement
+                ) {
+
+                    if (
+                        player &&
+                        player.requestFullscreen
+                    ) {
+
+                        player.requestFullscreen();
+
+                    }
+
+                }
+
+                else {
+
+                    if (
+                        document.exitFullscreen
+                    ) {
+
+                        document.exitFullscreen();
+
+                    }
+
+                }
+
+            }
+        );
+
+    }
+
+
+
+    /* =========================
+       VIDEO CLICK
+    ========================= */
+
+    videoPlayer.addEventListener(
+        "click",
+        toggleVideoPlay
+    );
+
+
+
+    /* =========================
+       HIDE CONTROLS
+    ========================= */
+
+    let controlsTimeout;
+
+
+    function showVideoControls() {
+
+        if (!youtubeControls) {
+            return;
+        }
+
+
+        youtubeControls.classList.remove(
+            "hidden"
+        );
+
+
+        clearTimeout(
+            controlsTimeout
+        );
+
+
+        if (!videoPlayer.paused) {
+
+            controlsTimeout =
+                setTimeout(
+                    function() {
+
+                        youtubeControls.classList.add(
+                            "hidden"
+                        );
+
+                    },
+                    2500
+                );
+
+        }
+
+    }
+
+
+    videoPlayer.addEventListener(
+        "mousemove",
+        showVideoControls
+    );
+
+
+    videoPlayer.addEventListener(
+        "mouseenter",
+        showVideoControls
+    );
+
+
+    videoPlayer.addEventListener(
+        "play",
+        showVideoControls
+    );
+
+
+    videoPlayer.addEventListener(
+        "pause",
+        function() {
+
+            if (youtubeControls) {
+
+                youtubeControls.classList.remove(
+                    "hidden"
+                );
+
+            }
+
+        }
+    );
+
+
+
+    /* =========================
+       INITIALIZE
+    ========================= */
+
+    videoPlayer.volume =
+        1;
+
+
+    updateMuteButton();
+
+    updatePlayButton();
+
+    updateVideoTime();
+
+
+    videoPlayer.play().catch(
+        function() {
+
+            updatePlayButton();
+
+        }
+    );
 
 }
+
 
 
 
@@ -981,62 +1689,37 @@ function closeVideoViewer(){
    SPACE BAR PAUSE
 ========================= */
 
-
 document.addEventListener(
     "keydown",
-    function(event){
+    function(event) {
 
-
-        if(event.code !== "Space"){
+        if (
+            event.code !== "Space"
+        ) {
             return;
         }
 
 
-
-        const player =
-            document.getElementById(
-                "mainVideoPlayer"
-            );
+        const target =
+            event.target;
 
 
+        /*
+            Let spaces work normally
+            while typing.
+        */
 
-        if(player){
-
-
-            event.preventDefault();
-
-
-
-            if(player.paused){
-
-                player.play();
-
-            }
-
-            else {
-
-                player.pause();
-
-            }
-
-
+        if (
+            target &&
+            (
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.tagName === "SELECT" ||
+                target.isContentEditable
+            )
+        ) {
+            return;
         }
-
-
-    }
-);
-
-
-
-
-/* =========================
-   CLOSE WHEN CLICKING OUTSIDE
-========================= */
-
-
-window.addEventListener(
-    "click",
-    function(event){
 
 
         const viewer =
@@ -1045,468 +1728,71 @@ window.addEventListener(
             );
 
 
-        if(
+        if (
+            !viewer ||
+            viewer.style.display === "none"
+        ) {
+            return;
+        }
+
+
+        const player =
+            document.getElementById(
+                "mainVideoPlayer"
+            );
+
+
+        if (!player) {
+            return;
+        }
+
+
+        event.preventDefault();
+
+
+        if (player.paused) {
+
+            player.play().catch(
+                function() {}
+            );
+
+        }
+
+        else {
+
+            player.pause();
+
+        }
+
+    }
+);
+
+
+
+
+
+/* =========================
+   CLOSE WHEN CLICKING OUTSIDE
+========================= */
+
+window.addEventListener(
+    "click",
+    function(event) {
+
+        const viewer =
+            document.getElementById(
+                "videoViewer"
+            );
+
+
+        if (
             viewer &&
             event.target === viewer
-        ){
+        ) {
 
             closeVideoViewer();
 
         }
 
-
     }
 );
-
-/* =========================
-   YOUTUBE STYLE VIDEO PLAYER
-========================= */
-
-const videoPlayer =
-    document.getElementById("mainVideoPlayer");
-
-const playPauseButton =
-    document.getElementById("playPauseButton");
-
-const videoBigPlay =
-    document.getElementById("videoBigPlay");
-
-const videoTime =
-    document.getElementById("videoTime");
-
-const videoProgress =
-    document.getElementById("videoProgress");
-
-const videoProgressContainer =
-    document.getElementById("videoProgressContainer");
-
-const muteButton =
-    document.getElementById("muteButton");
-
-const volumeSlider =
-    document.getElementById("volumeSlider");
-
-const speedButton =
-    document.getElementById("speedButton");
-
-const fullscreenButton =
-    document.getElementById("fullscreenButton");
-
-const youtubeControls =
-    document.querySelector(".youtube-controls");
-
-
-/* =========================
-   TIME
-========================= */
-
-function formatVideoTime(seconds) {
-
-    if (
-        !Number.isFinite(seconds) ||
-        seconds < 0
-    ) {
-        return "0:00";
-    }
-
-    seconds = Math.floor(seconds);
-
-    const minutes =
-        Math.floor(seconds / 60);
-
-    const remainingSeconds =
-        seconds % 60;
-
-    return (
-        minutes +
-        ":" +
-        remainingSeconds
-            .toString()
-            .padStart(2, "0")
-    );
-}
-
-
-function updateVideoTime() {
-
-    if (!videoPlayer || !videoTime) {
-        return;
-    }
-
-    videoTime.textContent =
-        formatVideoTime(
-            videoPlayer.currentTime
-        ) +
-        " / " +
-        formatVideoTime(
-            videoPlayer.duration
-        );
-
-    if (
-        videoPlayer.duration &&
-        Number.isFinite(videoPlayer.duration)
-    ) {
-
-        const percent =
-            (
-                videoPlayer.currentTime /
-                videoPlayer.duration
-            ) * 100;
-
-        videoProgress.style.width =
-            percent + "%";
-    }
-}
-
-
-/* =========================
-   PLAY / PAUSE
-========================= */
-
-function updatePlayButton() {
-
-    if (!videoPlayer) {
-        return;
-    }
-
-    if (videoPlayer.paused) {
-
-        playPauseButton.textContent = "▶";
-
-        videoBigPlay.classList.remove(
-            "hidden"
-        );
-
-    } else {
-
-        playPauseButton.textContent = "❚❚";
-
-        videoBigPlay.classList.add(
-            "hidden"
-        );
-    }
-}
-
-
-function toggleVideoPlay() {
-
-    if (!videoPlayer) {
-        return;
-    }
-
-    if (videoPlayer.paused) {
-
-        videoPlayer.play();
-
-    } else {
-
-        videoPlayer.pause();
-    }
-}
-
-
-if (playPauseButton) {
-
-    playPauseButton.addEventListener(
-        "click",
-        toggleVideoPlay
-    );
-}
-
-
-if (videoBigPlay) {
-
-    videoBigPlay.addEventListener(
-        "click",
-        toggleVideoPlay
-    );
-}
-
-
-if (videoPlayer) {
-
-    videoPlayer.addEventListener(
-        "play",
-        updatePlayButton
-    );
-
-    videoPlayer.addEventListener(
-        "pause",
-        updatePlayButton
-    );
-
-    videoPlayer.addEventListener(
-        "timeupdate",
-        updateVideoTime
-    );
-
-    videoPlayer.addEventListener(
-        "loadedmetadata",
-        updateVideoTime
-    );
-
-    videoPlayer.addEventListener(
-        "durationchange",
-        updateVideoTime
-    );
-}
-
-
-/* =========================
-   PROGRESS BAR
-========================= */
-
-if (videoProgressContainer) {
-
-    videoProgressContainer.addEventListener(
-        "click",
-        function(event) {
-
-            if (
-                !videoPlayer ||
-                !videoPlayer.duration
-            ) {
-                return;
-            }
-
-            const rect =
-                videoProgressContainer.getBoundingClientRect();
-
-            const clickPosition =
-                event.clientX - rect.left;
-
-            const percentage =
-                clickPosition / rect.width;
-
-            videoPlayer.currentTime =
-                percentage *
-                videoPlayer.duration;
-        }
-    );
-}
-
-
-/* =========================
-   VOLUME
-========================= */
-
-if (volumeSlider) {
-
-    volumeSlider.addEventListener(
-        "input",
-        function() {
-
-            videoPlayer.volume =
-                Number(this.value);
-
-            videoPlayer.muted =
-                videoPlayer.volume === 0;
-
-            updateMuteButton();
-        }
-    );
-}
-
-
-function updateMuteButton() {
-
-    if (!videoPlayer || !muteButton) {
-        return;
-    }
-
-    if (
-        videoPlayer.muted ||
-        videoPlayer.volume === 0
-    ) {
-
-        muteButton.textContent = "🔇";
-
-    } else if (
-        videoPlayer.volume < 0.5
-    ) {
-
-        muteButton.textContent = "🔉";
-
-    } else {
-
-        muteButton.textContent = "🔊";
-    }
-}
-
-
-if (muteButton) {
-
-    muteButton.addEventListener(
-        "click",
-        function() {
-
-            videoPlayer.muted =
-                !videoPlayer.muted;
-
-            updateMuteButton();
-        }
-    );
-}
-
-
-/* =========================
-   PLAYBACK SPEED
-========================= */
-
-const playbackSpeeds = [
-    1,
-    1.25,
-    1.5,
-    1.75,
-    2
-];
-
-let currentSpeedIndex = 0;
-
-
-if (speedButton) {
-
-    speedButton.addEventListener(
-        "click",
-        function() {
-
-            currentSpeedIndex++;
-
-            if (
-                currentSpeedIndex >=
-                playbackSpeeds.length
-            ) {
-                currentSpeedIndex = 0;
-            }
-
-            const speed =
-                playbackSpeeds[
-                    currentSpeedIndex
-                ];
-
-            videoPlayer.playbackRate =
-                speed;
-
-            speedButton.textContent =
-                speed + "x";
-        }
-    );
-}
-
-
-/* =========================
-   FULLSCREEN
-========================= */
-
-if (fullscreenButton) {
-
-    fullscreenButton.addEventListener(
-        "click",
-        function() {
-
-            const player =
-                document.querySelector(
-                    ".youtube-video-wrapper"
-                );
-
-            if (
-                !document.fullscreenElement
-            ) {
-
-                if (
-                    player.requestFullscreen
-                ) {
-                    player.requestFullscreen();
-                }
-
-            } else {
-
-                document.exitFullscreen();
-            }
-        }
-    );
-}
-
-
-/* =========================
-   VIDEO CLICK
-========================= */
-
-if (videoPlayer) {
-
-    videoPlayer.addEventListener(
-        "click",
-        toggleVideoPlay
-    );
-}
-
-
-/* =========================
-   HIDE CONTROLS
-========================= */
-
-let controlsTimeout;
-
-
-function showVideoControls() {
-
-    if (!youtubeControls) {
-        return;
-    }
-
-    youtubeControls.classList.remove(
-        "hidden"
-    );
-
-    clearTimeout(
-        controlsTimeout
-    );
-
-    if (
-        videoPlayer &&
-        !videoPlayer.paused
-    ) {
-
-        controlsTimeout =
-            setTimeout(
-                function() {
-
-                    youtubeControls.classList.add(
-                        "hidden"
-                    );
-
-                },
-                2500
-            );
-    }
-}
-
-
-if (videoPlayer) {
-
-    videoPlayer.addEventListener(
-        "mousemove",
-        showVideoControls
-    );
-
-    videoPlayer.addEventListener(
-        "mouseenter",
-        showVideoControls
-    );
-
-    videoPlayer.addEventListener(
-        "play",
-        showVideoControls
-    );
-
-    videoPlayer.addEventListener(
-        "pause",
-        function() {
-
-            youtubeControls.classList.remove(
-                "hidden"
-            );
-
-        }
-    );
-}

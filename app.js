@@ -1,10 +1,5 @@
 /* =========================
-   SIRENSPACE APP
-========================= */
-
-
-/* =========================
-   BASIC HELPERS
+   GENERAL HELPERS
 ========================= */
 
 function escapeHTML(text) {
@@ -15,7 +10,7 @@ function escapeHTML(text) {
 
     const div = document.createElement("div");
 
-    div.textContent = text;
+    div.textContent = String(text);
 
     return div.innerHTML;
 }
@@ -27,62 +22,81 @@ function escapeHTML(text) {
 
 function switchPage(pageName) {
 
-    document
-        .querySelectorAll(".page")
-        .forEach(function(page) {
+    const postsPage =
+        document.getElementById("postsPage");
 
-            page.classList.remove("active");
+    const mediaPage =
+        document.getElementById("mediaPage");
 
-        });
+    const postsTab =
+        document.getElementById("postsTab");
 
-    document
-        .querySelectorAll(".nav-tab")
-        .forEach(function(tab) {
-
-            tab.classList.remove("active");
-
-        });
+    const mediaTab =
+        document.getElementById("mediaTab");
 
 
-    const page =
-        document.getElementById(pageName);
+    if (!postsPage || !mediaPage) {
 
-    if (page) {
-        page.classList.add("active");
-    }
+        console.error(
+            "Posts or Media page element is missing."
+        );
 
-
-    if (pageName === "postsPage") {
-
-        const tab =
-            document.getElementById("postsTab");
-
-        if (tab) {
-            tab.classList.add("active");
-        }
-
-        loadPosts();
-
+        return;
     }
 
 
     if (pageName === "mediaPage") {
 
-        const tab =
-            document.getElementById("mediaTab");
+        postsPage.classList.remove("active");
 
-        if (tab) {
-            tab.classList.add("active");
+        mediaPage.classList.add("active");
+
+
+        if (postsTab) {
+            postsTab.classList.remove("active");
         }
 
-        loadVideos();
+        if (mediaTab) {
+            mediaTab.classList.add("active");
+        }
 
+
+        if (typeof loadVideos === "function") {
+            loadVideos();
+        }
+
+        return;
     }
+
+
+    if (pageName === "postsPage") {
+
+        mediaPage.classList.remove("active");
+
+        postsPage.classList.add("active");
+
+
+        if (mediaTab) {
+            mediaTab.classList.remove("active");
+        }
+
+        if (postsTab) {
+            postsTab.classList.add("active");
+        }
+
+
+        if (typeof loadPosts === "function") {
+            loadPosts();
+        }
+
+        return;
+    }
+
 }
 
 
 /* =========================
-   ACCOUNT MODAL
+   LOGIN / ACCOUNT
 ========================= */
 
 function showLogin() {
@@ -90,21 +104,28 @@ function showLogin() {
     const modal =
         document.getElementById("accountModal");
 
-    const loginForm =
-        document.getElementById("loginForm");
-
-    const signupForm =
-        document.getElementById("signupForm");
-
     if (!modal) {
         return;
     }
 
     modal.style.display = "flex";
 
-    loginForm.style.display = "block";
 
-    signupForm.style.display = "none";
+    const loginForm =
+        document.getElementById("loginForm");
+
+    const signupForm =
+        document.getElementById("signupForm");
+
+
+    if (loginForm) {
+        loginForm.style.display = "block";
+    }
+
+    if (signupForm) {
+        signupForm.style.display = "none";
+    }
+
 }
 
 
@@ -113,21 +134,28 @@ function showSignup() {
     const modal =
         document.getElementById("accountModal");
 
-    const loginForm =
-        document.getElementById("loginForm");
-
-    const signupForm =
-        document.getElementById("signupForm");
-
     if (!modal) {
         return;
     }
 
     modal.style.display = "flex";
 
-    loginForm.style.display = "none";
 
-    signupForm.style.display = "block";
+    const loginForm =
+        document.getElementById("loginForm");
+
+    const signupForm =
+        document.getElementById("signupForm");
+
+
+    if (loginForm) {
+        loginForm.style.display = "none";
+    }
+
+    if (signupForm) {
+        signupForm.style.display = "block";
+    }
+
 }
 
 
@@ -139,6 +167,7 @@ function closeAccount() {
     if (modal) {
         modal.style.display = "none";
     }
+
 }
 
 
@@ -148,33 +177,47 @@ function closeAccount() {
 
 async function signup() {
 
-    const username =
-        document
-            .getElementById("signupUsername")
-            .value
-            .trim();
+    const usernameInput =
+        document.getElementById("signupUsername");
 
-    const password =
-        document
-            .getElementById("signupPassword")
-            .value;
+    const passwordInput =
+        document.getElementById("signupPassword");
 
-    const confirmPassword =
-        document
-            .getElementById("signupPasswordConfirm")
-            .value;
+    const confirmInput =
+        document.getElementById("signupPasswordConfirm");
 
-    const error =
+    const errorBox =
         document.getElementById("signupError");
 
 
-    error.textContent = "";
+    if (!usernameInput || !passwordInput) {
+        return;
+    }
+
+
+    const username =
+        usernameInput.value.trim();
+
+    const password =
+        passwordInput.value;
+
+    const confirmPassword =
+        confirmInput
+            ? confirmInput.value
+            : "";
+
+
+    if (errorBox) {
+        errorBox.textContent = "";
+    }
 
 
     if (!username || !password) {
 
-        error.textContent =
-            "Please enter a username and password.";
+        if (errorBox) {
+            errorBox.textContent =
+                "Username and password are required.";
+        }
 
         return;
     }
@@ -182,17 +225,10 @@ async function signup() {
 
     if (password !== confirmPassword) {
 
-        error.textContent =
-            "Passwords do not match.";
-
-        return;
-    }
-
-
-    if (username.length < 3) {
-
-        error.textContent =
-            "Username must be at least 3 characters.";
+        if (errorBox) {
+            errorBox.textContent =
+                "Passwords do not match.";
+        }
 
         return;
     }
@@ -205,44 +241,41 @@ async function signup() {
 
     const {
         data,
-        error: signupError
+        error
     } =
-        await supabaseClient.auth.signUp({
+    await supabaseClient.auth.signUp({
 
-            email: email,
+        email: email,
 
-            password: password,
+        password: password,
 
-            options: {
-                data: {
-                    username: username
-                }
+        options: {
+
+            data: {
+                username: username
             }
 
-        });
+        }
+
+    });
 
 
-    if (signupError) {
+    if (error) {
 
-        error.textContent =
-            signupError.message;
-
-        return;
-    }
-
-
-    if (!data.user) {
-
-        error.textContent =
-            "Account could not be created.";
+        if (errorBox) {
+            errorBox.textContent =
+                error.message;
+        }
 
         return;
     }
 
 
-    const {
-        error: profileError
-    } =
+    if (data.user) {
+
+        const {
+            error: profileError
+        } =
         await supabaseClient
             .from("profiles")
             .insert({
@@ -254,18 +287,22 @@ async function signup() {
             });
 
 
-    if (profileError) {
+        if (profileError) {
 
-        console.error(
-            "Profile error:",
-            profileError
-        );
+            console.error(
+                "Profile creation error:",
+                profileError
+            );
+
+        }
+
     }
 
 
     closeAccount();
 
-    loadAccount();
+    await loadAccount();
+
 }
 
 
@@ -275,28 +312,39 @@ async function signup() {
 
 async function login() {
 
-    const username =
-        document
-            .getElementById("loginUsername")
-            .value
-            .trim();
+    const usernameInput =
+        document.getElementById("loginUsername");
 
-    const password =
-        document
-            .getElementById("loginPassword")
-            .value;
+    const passwordInput =
+        document.getElementById("loginPassword");
 
-    const error =
+    const errorBox =
         document.getElementById("loginError");
 
 
-    error.textContent = "";
+    if (!usernameInput || !passwordInput) {
+        return;
+    }
+
+
+    const username =
+        usernameInput.value.trim();
+
+    const password =
+        passwordInput.value;
+
+
+    if (errorBox) {
+        errorBox.textContent = "";
+    }
 
 
     if (!username || !password) {
 
-        error.textContent =
-            "Please enter your username and password.";
+        if (errorBox) {
+            errorBox.textContent =
+                "Username and password are required.";
+        }
 
         return;
     }
@@ -308,21 +356,23 @@ async function login() {
 
 
     const {
-        error: loginError
+        error
     } =
-        await supabaseClient.auth.signInWithPassword({
+    await supabaseClient.auth.signInWithPassword({
 
-            email: email,
+        email: email,
 
-            password: password
+        password: password
 
-        });
+    });
 
 
-    if (loginError) {
+    if (error) {
 
-        error.textContent =
-            loginError.message;
+        if (errorBox) {
+            errorBox.textContent =
+                error.message;
+        }
 
         return;
     }
@@ -330,11 +380,8 @@ async function login() {
 
     closeAccount();
 
-    loadAccount();
+    await loadAccount();
 
-    loadPosts();
-
-    loadVideos();
 }
 
 
@@ -344,13 +391,25 @@ async function login() {
 
 async function logout() {
 
+    const {
+        error
+    } =
     await supabaseClient.auth.signOut();
 
-    loadAccount();
 
-    loadPosts();
+    if (error) {
 
-    loadVideos();
+        console.error(
+            "Logout error:",
+            error
+        );
+
+        return;
+    }
+
+
+    await loadAccount();
+
 }
 
 
@@ -363,15 +422,12 @@ async function loadAccount() {
     const {
         data
     } =
-        await supabaseClient.auth.getUser();
+    await supabaseClient.auth.getUser();
 
 
     const user =
         data.user;
 
-
-    const accountInfo =
-        document.getElementById("accountInfo");
 
     const loginButton =
         document.getElementById("loginButton");
@@ -379,56 +435,106 @@ async function loadAccount() {
     const signupButton =
         document.getElementById("signupButton");
 
+    const accountInfo =
+        document.getElementById("accountInfo");
+
     const logoutButton =
         document.getElementById("logoutButton");
 
 
     if (user) {
 
-        const username =
-            user.user_metadata?.username ||
-            user.email?.split("@")[0] ||
-            "User";
+        if (loginButton) {
+            loginButton.style.display = "none";
+        }
+
+        if (signupButton) {
+            signupButton.style.display = "none";
+        }
+
+        if (logoutButton) {
+            logoutButton.style.display = "inline-block";
+        }
 
 
-        accountInfo.textContent =
-            username;
+        if (accountInfo) {
+
+            let username =
+                user.user_metadata &&
+                user.user_metadata.username;
 
 
-        loginButton.style.display =
-            "none";
+            if (!username) {
 
-        signupButton.style.display =
-            "none";
+                const {
+                    data: profile
+                } =
+                await supabaseClient
+                    .from("profiles")
+                    .select("username")
+                    .eq("id", user.id)
+                    .single();
 
-        logoutButton.style.display =
-            "inline-block";
 
-    } else {
+                if (profile) {
+                    username =
+                        profile.username;
+                }
 
-        accountInfo.textContent =
-            "";
+            }
 
-        loginButton.style.display =
-            "inline-block";
 
-        signupButton.style.display =
-            "inline-block";
+            accountInfo.textContent =
+                username || "Account";
 
-        logoutButton.style.display =
-            "none";
+            accountInfo.style.display =
+                "inline-block";
+
+        }
+
     }
+
+    else {
+
+        if (loginButton) {
+            loginButton.style.display =
+                "inline-block";
+        }
+
+        if (signupButton) {
+            signupButton.style.display =
+                "inline-block";
+        }
+
+        if (logoutButton) {
+            logoutButton.style.display =
+                "none";
+        }
+
+        if (accountInfo) {
+            accountInfo.style.display =
+                "none";
+        }
+
+    }
+
 }
 
 
 /* =========================
-   CREATE POST MODAL
+   CREATE POST
 ========================= */
+
+let selectedPostFile = null;
+
 
 function openCreatePost() {
 
     const modal =
-        document.getElementById("createPostModal");
+        document.getElementById(
+            "createPostModal"
+        );
+
 
     if (!modal) {
 
@@ -444,59 +550,167 @@ function openCreatePost() {
 
 
     const content =
-        document.getElementById("postContent");
+        document.getElementById(
+            "postContent"
+        );
+
 
     if (content) {
         content.focus();
     }
+
 }
 
 
 function closeCreatePost() {
 
     const modal =
-        document.getElementById("createPostModal");
+        document.getElementById(
+            "createPostModal"
+        );
+
 
     if (modal) {
         modal.style.display = "none";
     }
-}
 
 
-/* =========================
-   POST FILE
-========================= */
-
-let selectedPostFile = null;
+    selectedPostFile = null;
 
 
-function handlePostFile(event) {
+    const content =
+        document.getElementById(
+            "postContent"
+        );
 
-    selectedPostFile =
-        event.target.files[0] || null;
+    const file =
+        document.getElementById(
+            "postFile"
+        );
 
-
-    const display =
+    const selected =
         document.getElementById(
             "selectedPostFile"
         );
 
+    const error =
+        document.getElementById(
+            "postError"
+        );
 
-    if (!display) {
+
+    if (content) {
+        content.value = "";
+    }
+
+    if (file) {
+        file.value = "";
+    }
+
+    if (selected) {
+        selected.textContent = "";
+    }
+
+    if (error) {
+        error.textContent = "";
+    }
+
+}
+
+
+function handlePostFile(event) {
+
+    const input =
+        event.target;
+
+
+    const file =
+        input.files[0];
+
+
+    const selected =
+        document.getElementById(
+            "selectedPostFile"
+        );
+
+    const error =
+        document.getElementById(
+            "postError"
+        );
+
+
+    selectedPostFile = null;
+
+
+    if (error) {
+        error.textContent = "";
+    }
+
+
+    if (!file) {
+
+        if (selected) {
+            selected.textContent = "";
+        }
+
         return;
     }
 
 
-    if (selectedPostFile) {
+    const extension =
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
 
-        display.textContent =
-            selectedPostFile.name;
 
-    } else {
+    const allowed = [
 
-        display.textContent =
-            "";
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+
+        "mp4",
+        "mov",
+        "avi",
+
+        "mp3",
+        "wav",
+        "ogg"
+
+    ];
+
+
+    if (!allowed.includes(extension)) {
+
+        input.value = "";
+
+
+        if (error) {
+            error.textContent =
+                "That file type is not supported.";
+        }
+
+
+        if (selected) {
+            selected.textContent = "";
+        }
+
+
+        return;
     }
+
+
+    selectedPostFile = file;
+
+
+    if (selected) {
+        selected.textContent =
+            "Selected: " + file.name;
+    }
+
 }
 
 
@@ -509,42 +723,58 @@ async function createPost() {
     const {
         data
     } =
-        await supabaseClient.auth.getUser();
+    await supabaseClient.auth.getUser();
 
 
     const user =
         data.user;
 
 
-    const error =
-        document.getElementById("postError");
+    const contentInput =
+        document.getElementById(
+            "postContent"
+        );
+
+    const errorBox =
+        document.getElementById(
+            "postError"
+        );
 
 
-    error.textContent = "";
+    const content =
+        contentInput
+            ? contentInput.value
+            : "";
 
 
     if (!user) {
 
-        error.textContent =
-            "You must be logged in to post.";
+        if (errorBox) {
+            errorBox.textContent =
+                "You must be logged in to post.";
+        }
 
         return;
     }
 
 
-    const content =
-        document
-            .getElementById("postContent")
-            .value
-            .trim();
+    if (
+        content.trim() === "" &&
+        !selectedPostFile
+    ) {
 
-
-    if (!content && !selectedPostFile) {
-
-        error.textContent =
-            "Write something or attach a file.";
+        if (errorBox) {
+            errorBox.textContent =
+                "Write something or attach a file.";
+        }
 
         return;
+    }
+
+
+    if (errorBox) {
+        errorBox.textContent =
+            "Posting...";
     }
 
 
@@ -552,10 +782,6 @@ async function createPost() {
 
     let mediaType = null;
 
-
-    /* =========================
-       UPLOAD POST MEDIA
-    ========================== */
 
     if (selectedPostFile) {
 
@@ -566,61 +792,38 @@ async function createPost() {
                 .toLowerCase();
 
 
-        const uniqueID =
-            crypto.randomUUID();
-
-
         const filePath =
-            "posts/" +
-            user.id +
-            "/" +
-            uniqueID +
-            "." +
-            extension;
+            `posts/${user.id}/${crypto.randomUUID()}.${extension}`;
 
 
-        const {
-            error: uploadError
-        } =
-            await supabaseClient
-                .storage
+        const upload =
+            await supabaseClient.storage
                 .from("post-media")
                 .upload(
                     filePath,
-                    selectedPostFile,
-                    {
-                        upsert: false
-                    }
+                    selectedPostFile
                 );
 
 
-        if (uploadError) {
+        if (upload.error) {
 
-            console.error(
-                "Post media upload error:",
-                uploadError
-            );
-
-            error.textContent =
-                uploadError.message;
+            if (errorBox) {
+                errorBox.textContent =
+                    upload.error.message;
+            }
 
             return;
         }
 
 
-        const {
-            data: publicData
-        } =
-            supabaseClient
-                .storage
+        mediaURL =
+            supabaseClient.storage
                 .from("post-media")
                 .getPublicUrl(
                     filePath
-                );
-
-
-        mediaURL =
-            publicData.publicUrl;
+                )
+                .data
+                .publicUrl;
 
 
         if (
@@ -631,7 +834,9 @@ async function createPost() {
 
             mediaType = "image";
 
-        } else if (
+        }
+
+        else if (
             selectedPostFile.type.startsWith(
                 "video/"
             )
@@ -639,7 +844,9 @@ async function createPost() {
 
             mediaType = "video";
 
-        } else if (
+        }
+
+        else if (
             selectedPostFile.type.startsWith(
                 "audio/"
             )
@@ -647,87 +854,72 @@ async function createPost() {
 
             mediaType = "audio";
 
-        } else {
-
-            mediaType =
-                selectedPostFile.type;
         }
+
     }
 
 
-    /* =========================
-       GET USERNAME
-    ========================== */
-
-    const username =
-        user.user_metadata?.username ||
-        user.email?.split("@")[0] ||
-        "User";
-
-
-    /* =========================
-       INSERT POST
-    ========================== */
-
     const {
-        error: postError
+        data: profile
     } =
-        await supabaseClient
-            .from("posts")
-            .insert({
-
-                user_id: user.id,
-
-                username: username,
-
-                content: content || null,
-
-                media_url: mediaURL,
-
-                media_type: mediaType
-
-            });
+    await supabaseClient
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .single();
 
 
-    if (postError) {
+    if (!profile) {
 
-        console.error(
-            "Post creation error:",
-            postError
-        );
-
-        error.textContent =
-            postError.message;
+        if (errorBox) {
+            errorBox.textContent =
+                "Could not find your profile.";
+        }
 
         return;
     }
 
 
-    /* =========================
-       RESET
-    ========================== */
+    const {
+        error
+    } =
+    await supabaseClient
+        .from("posts")
+        .insert({
 
-    document
-        .getElementById("postContent")
-        .value = "";
+            user_id:
+                user.id,
+
+            username:
+                profile.username,
+
+            content:
+                content,
+
+            media_url:
+                mediaURL,
+
+            media_type:
+                mediaType
+
+        });
 
 
-    document
-        .getElementById("postFile")
-        .value = "";
+    if (error) {
 
+        if (errorBox) {
+            errorBox.textContent =
+                error.message;
+        }
 
-    document
-        .getElementById("selectedPostFile")
-        .textContent = "";
-
-
-    selectedPostFile = null;
+        return;
+    }
 
 
     closeCreatePost();
 
-    loadPosts();
+    await loadPosts();
+
 }
 
 
@@ -749,42 +941,28 @@ async function loadPosts() {
 
 
     container.innerHTML =
-        "<p>Loading posts...</p>";
+        "Loading posts...";
 
 
     const {
-        data: posts,
+        data,
         error
     } =
-        await supabaseClient
-            .from("posts")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
+    await supabaseClient
+        .from("posts")
+        .select("*")
+        .order(
+            "created_at",
+            {
+                ascending: false
+            }
+        );
 
 
     if (error) {
 
-        console.error(
-            "Post loading error:",
-            error
-        );
-
-        container.innerHTML =
-            "<p>Unable to load posts.</p>";
-
-        return;
-    }
-
-
-    if (!posts || posts.length === 0) {
-
-        container.innerHTML =
-            "<div class='media-placeholder'>No posts yet.</div>";
+        container.textContent =
+            error.message;
 
         return;
     }
@@ -793,156 +971,183 @@ async function loadPosts() {
     container.innerHTML = "";
 
 
-    for (const post of posts) {
+    if (!data || data.length === 0) {
 
-        const postElement =
-            document.createElement("div");
+        container.innerHTML =
+            "<div class=\"empty-posts\">No posts yet.</div>";
 
-
-        postElement.className =
-            "post-card";
-
-
-        let mediaHTML = "";
+        return;
+    }
 
 
-        if (
-            post.media_url &&
-            post.media_type === "image"
-        ) {
+    data.forEach(
+        function(post) {
 
-            mediaHTML =
-                `
-                <img
-                    class="post-media"
-                    src="${escapeHTML(post.media_url)}"
-                    alt=""
-                >
-                `;
+            const postElement =
+                document.createElement(
+                    "div"
+                );
 
-        } else if (
-            post.media_url &&
-            post.media_type === "video"
-        ) {
 
-            mediaHTML =
-                `
-                <video
-                    class="post-media"
-                    controls
-                >
-                    <source
+            postElement.className =
+                "post";
+
+
+            let mediaHTML = "";
+
+
+            if (
+                post.media_url &&
+                post.media_type === "image"
+            ) {
+
+                mediaHTML = `
+                    <img
+                        class="post-media"
                         src="${escapeHTML(post.media_url)}"
+                        alt=""
                     >
-                </video>
                 `;
 
-        } else if (
-            post.media_url &&
-            post.media_type === "audio"
-        ) {
-
-            mediaHTML =
-                `
-                <audio
-                    class="post-audio"
-                    controls
-                >
-                    <source
-                        src="${escapeHTML(post.media_url)}"
-                    >
-                </audio>
-                `;
-        }
-
-
-        postElement.innerHTML =
-            `
-            <div class="post-header">
-
-                <strong>
-                    ${escapeHTML(post.username)}
-                </strong>
-
-            </div>
-
-            ${
-                post.content
-                    ? `
-                        <div class="post-content">
-                            ${escapeHTML(post.content)}
-                        </div>
-                    `
-                    : ""
             }
 
-            ${mediaHTML}
 
-            <div class="post-footer">
+            else if (
+                post.media_url &&
+                post.media_type === "video"
+            ) {
 
-                <span>
-                    ${new Date(
-                        post.created_at
-                    ).toLocaleString()}
-                </span>
+                mediaHTML = `
+                    <video
+                        class="post-media"
+                        controls
+                    >
+                        <source
+                            src="${escapeHTML(post.media_url)}"
+                        >
+                    </video>
+                `;
 
-                <button
-                    class="delete-post-button"
-                    onclick="deletePost('${post.id}')"
-                    style="display:none;"
-                >
-                    Delete
-                </button>
+            }
 
-            </div>
+
+            else if (
+                post.media_url &&
+                post.media_type === "audio"
+            ) {
+
+                mediaHTML = `
+                    <audio
+                        class="post-audio"
+                        controls
+                    >
+                        <source
+                            src="${escapeHTML(post.media_url)}"
+                        >
+                    </audio>
+                `;
+
+            }
+
+
+            const date =
+                new Date(
+                    post.created_at
+                ).toLocaleString();
+
+
+            postElement.innerHTML = `
+
+                <div class="post-header">
+
+                    <strong>
+                        ${escapeHTML(post.username)}
+                    </strong>
+
+                    <span>
+                        ${escapeHTML(date)}
+                    </span>
+
+                </div>
+
+
+                <div class="post-content">
+                    ${escapeHTML(post.content || "")}
+                </div>
+
+
+                ${mediaHTML}
+
             `;
 
 
-        container.appendChild(
-            postElement
-        );
+            container.appendChild(
+                postElement
+            );
 
 
-        checkPostOwnership(
-            postElement,
-            post.user_id
-        );
-    }
+            checkPostOwnership(
+                post,
+                postElement
+            );
+
+        }
+    );
+
 }
 
 
 /* =========================
-   CHECK POST OWNERSHIP
+   POST OWNERSHIP
 ========================= */
 
 async function checkPostOwnership(
-    postElement,
-    postUserID
+    post,
+    postElement
 ) {
 
     const {
         data
     } =
-        await supabaseClient.auth.getUser();
+    await supabaseClient.auth.getUser();
 
 
     if (
-        data.user &&
-        data.user.id === postUserID
+        !data.user ||
+        data.user.id !== post.user_id
     ) {
+        return;
+    }
 
-        const deleteButton =
-            postElement.querySelector(
-                ".delete-post-button"
+
+    const deleteButton =
+        document.createElement(
+            "button"
+        );
+
+
+    deleteButton.className =
+        "delete-post-button";
+
+
+    deleteButton.textContent =
+        "Delete";
+
+
+    deleteButton.onclick =
+        function() {
+
+            deletePost(
+                post.id
             );
 
+        };
 
-        if (deleteButton) {
 
-            deleteButton.style.display =
-                "inline-block";
-        }
-    }
+    postElement.appendChild(
+        deleteButton
+    );
+
 }
 
 
@@ -950,41 +1155,18 @@ async function checkPostOwnership(
    DELETE POST
 ========================= */
 
-async function deletePost(postID) {
-
-    const {
-        data
-    } =
-        await supabaseClient.auth.getUser();
-
-
-    if (!data.user) {
-        return;
-    }
-
-
-    const confirmed =
-        confirm(
-            "Delete this post?"
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
+async function deletePost(postId) {
 
     const {
         error
     } =
-        await supabaseClient
-            .from("posts")
-            .delete()
-            .eq("id", postID)
-            .eq(
-                "user_id",
-                data.user.id
-            );
+    await supabaseClient
+        .from("posts")
+        .delete()
+        .eq(
+            "id",
+            postId
+        );
 
 
     if (error) {
@@ -998,549 +1180,9 @@ async function deletePost(postID) {
     }
 
 
-    loadPosts();
+    await loadPosts();
+
 }
-
-
-/* =========================
-   MEDIA UPLOAD
-========================= */
-
-let selectedVideo = null;
-
-let selectedThumbnail = null;
-
-
-function openMediaUpload() {
-
-    const modal =
-        document.getElementById(
-            "mediaUploadModal"
-        );
-
-
-    if (modal) {
-
-        modal.style.display =
-            "flex";
-    }
-}
-
-
-function closeMediaUpload() {
-
-    const modal =
-        document.getElementById(
-            "mediaUploadModal"
-        );
-
-
-    if (modal) {
-
-        modal.style.display =
-            "none";
-    }
-}
-
-
-function handleMediaVideo(event) {
-
-    selectedVideo =
-        event.target.files[0] || null;
-
-
-    const display =
-        document.getElementById(
-            "selectedVideo"
-        );
-
-
-    if (display) {
-
-        display.textContent =
-            selectedVideo
-                ? selectedVideo.name
-                : "";
-    }
-}
-
-
-function handleMediaThumbnail(event) {
-
-    selectedThumbnail =
-        event.target.files[0] || null;
-
-
-    const display =
-        document.getElementById(
-            "selectedThumbnail"
-        );
-
-
-    if (display) {
-
-        display.textContent =
-            selectedThumbnail
-                ? selectedThumbnail.name
-                : "";
-    }
-}
-
-
-/* =========================
-   UPLOAD MEDIA
-========================= */
-
-async function uploadMedia() {
-
-    const {
-        data
-    } =
-        await supabaseClient.auth.getUser();
-
-
-    const user =
-        data.user;
-
-
-    const error =
-        document.getElementById(
-            "mediaUploadError"
-        );
-
-
-    error.textContent = "";
-
-
-    if (!user) {
-
-        error.textContent =
-            "You must be logged in to upload.";
-
-        return;
-    }
-
-
-    const title =
-        document
-            .getElementById("mediaTitle")
-            .value
-            .trim();
-
-
-    const description =
-        document
-            .getElementById("mediaDescription")
-            .value
-            .trim();
-
-
-    if (!title) {
-
-        error.textContent =
-            "Please enter a title.";
-
-        return;
-    }
-
-
-    if (!selectedVideo) {
-
-        error.textContent =
-            "Please select a video.";
-
-        return;
-    }
-
-
-    if (!selectedThumbnail) {
-
-        error.textContent =
-            "Please select a thumbnail.";
-
-        return;
-    }
-
-
-    const videoExtension =
-        selectedVideo.name
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-    const thumbnailExtension =
-        selectedThumbnail.name
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-    const uniqueID =
-        crypto.randomUUID();
-
-
-    const videoPath =
-        "videos/" +
-        user.id +
-        "/" +
-        uniqueID +
-        "." +
-        videoExtension;
-
-
-    const thumbnailPath =
-        "thumbnails/" +
-        user.id +
-        "/" +
-        uniqueID +
-        "." +
-        thumbnailExtension;
-
-
-    /* =========================
-       VIDEO
-    ========================== */
-
-    const {
-        error: videoError
-    } =
-        await supabaseClient
-            .storage
-            .from("post-media")
-            .upload(
-                videoPath,
-                selectedVideo,
-                {
-                    upsert: false
-                }
-            );
-
-
-    if (videoError) {
-
-        console.error(
-            "Video upload error:",
-            videoError
-        );
-
-        error.textContent =
-            videoError.message;
-
-        return;
-    }
-
-
-    /* =========================
-       THUMBNAIL
-    ========================== */
-
-    const {
-        error: thumbnailError
-    } =
-        await supabaseClient
-            .storage
-            .from("post-media")
-            .upload(
-                thumbnailPath,
-                selectedThumbnail,
-                {
-                    upsert: false
-                }
-            );
-
-
-    if (thumbnailError) {
-
-        console.error(
-            "Thumbnail upload error:",
-            thumbnailError
-        );
-
-        error.textContent =
-            thumbnailError.message;
-
-        return;
-    }
-
-
-    const {
-        data: videoPublic
-    } =
-        supabaseClient
-            .storage
-            .from("post-media")
-            .getPublicUrl(
-                videoPath
-            );
-
-
-    const {
-        data: thumbnailPublic
-    } =
-        supabaseClient
-            .storage
-            .from("post-media")
-            .getPublicUrl(
-                thumbnailPath
-            );
-
-
-    const username =
-        user.user_metadata?.username ||
-        user.email?.split("@")[0] ||
-        "User";
-
-
-    /* =========================
-       SAVE VIDEO
-    ========================== */
-
-    const {
-        error: databaseError
-    } =
-        await supabaseClient
-            .from("videos")
-            .insert({
-
-                user_id: user.id,
-
-                username: username,
-
-                title: title,
-
-                description:
-                    description || null,
-
-                video_url:
-                    videoPublic.publicUrl,
-
-                thumbnail_url:
-                    thumbnailPublic.publicUrl,
-
-                video_format:
-                    videoExtension
-
-            });
-
-
-    if (databaseError) {
-
-        console.error(
-            "Video database error:",
-            databaseError
-        );
-
-        error.textContent =
-            databaseError.message;
-
-        return;
-    }
-
-
-    /* =========================
-       RESET
-    ========================== */
-
-    document
-        .getElementById("mediaTitle")
-        .value = "";
-
-
-    document
-        .getElementById("mediaDescription")
-        .value = "";
-
-
-    document
-        .getElementById("mediaVideo")
-        .value = "";
-
-
-    document
-        .getElementById("mediaThumbnail")
-        .value = "";
-
-
-    document
-        .getElementById("selectedVideo")
-        .textContent = "";
-
-
-    document
-        .getElementById("selectedThumbnail")
-        .textContent = "";
-
-
-    selectedVideo = null;
-
-    selectedThumbnail = null;
-
-
-    closeMediaUpload();
-
-    loadVideos();
-}
-
-
-/* =========================
-   LOAD VIDEOS
-========================= */
-
-async function loadVideos() {
-
-    const container =
-        document.getElementById(
-            "mediaContainer"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    container.innerHTML =
-        "<p>Loading videos...</p>";
-
-
-    const {
-        data: videos,
-        error
-    } =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
-
-    if (error) {
-
-        console.error(
-            "Video loading error:",
-            error
-        );
-
-        container.innerHTML =
-            "<p>Unable to load videos.</p>";
-
-        return;
-    }
-
-
-    if (!videos || videos.length === 0) {
-
-        container.innerHTML =
-            "<div class='media-placeholder'>No videos yet.</div>";
-
-        return;
-    }
-
-
-    container.innerHTML = "";
-
-
-    videos.forEach(function(video) {
-
-        const card =
-            document.createElement("div");
-
-
-        card.className =
-            "media-card";
-
-
-        card.innerHTML =
-            `
-            <img
-                class="media-thumbnail"
-                src="${escapeHTML(video.thumbnail_url)}"
-                alt=""
-            >
-
-            <div class="media-title">
-                ${escapeHTML(video.title)}
-            </div>
-            `;
-
-
-        card.addEventListener(
-            "click",
-            function() {
-
-                if (
-                    typeof openVideoViewer ===
-                    "function"
-                ) {
-
-                    openVideoViewer(video);
-                }
-
-            }
-        );
-
-
-        container.appendChild(card);
-    });
-}
-
-
-/* =========================
-   MODAL BACKGROUND CLICK
-========================= */
-
-window.addEventListener(
-    "click",
-    function(event) {
-
-        const createPostModal =
-            document.getElementById(
-                "createPostModal"
-            );
-
-        const mediaUploadModal =
-            document.getElementById(
-                "mediaUploadModal"
-            );
-
-        const accountModal =
-            document.getElementById(
-                "accountModal"
-            );
-
-
-        if (
-            event.target ===
-            createPostModal
-        ) {
-
-            closeCreatePost();
-        }
-
-
-        if (
-            event.target ===
-            mediaUploadModal
-        ) {
-
-            closeMediaUpload();
-        }
-
-
-        if (
-            event.target ===
-            accountModal
-        ) {
-
-            closeAccount();
-        }
-    }
-);
 
 
 /* =========================
@@ -1552,10 +1194,6 @@ supabaseClient.auth.onAuthStateChange(
 
         loadAccount();
 
-        loadPosts();
-
-        loadVideos();
-
     }
 );
 
@@ -1564,8 +1202,13 @@ supabaseClient.auth.onAuthStateChange(
    INITIAL LOAD
 ========================= */
 
-loadAccount();
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
 
-loadPosts();
+        loadAccount();
 
-loadVideos();
+        loadPosts();
+
+    }
+);
