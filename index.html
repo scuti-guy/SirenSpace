@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -14,9 +16,12 @@
         rel="stylesheet"
         href="style.css"
     >
+
 </head>
 
+
 <body>
+
 
     <!-- =========================
          HEADER
@@ -25,12 +30,20 @@
     <header class="site-header">
 
         <div class="site-title">
-            SirenSpace
+
+            <img
+                src="logo.png"
+                alt="SirenSpace"
+                class="site-logo"
+            >
+
         </div>
+
 
         <div class="account-area">
 
             <span id="accountInfo"></span>
+
 
             <button
                 id="loginButton"
@@ -39,12 +52,14 @@
                 Login
             </button>
 
+
             <button
                 id="signupButton"
                 onclick="showSignup()"
             >
                 Sign Up
             </button>
+
 
             <button
                 id="logoutButton"
@@ -72,6 +87,7 @@
         >
             Posts
         </button>
+
 
         <button
             id="mediaTab"
@@ -102,6 +118,7 @@
                 placeholder="Search posts..."
             >
 
+
             <button
                 class="page-action-button post-message-button"
                 onclick="openCreatePost()"
@@ -110,6 +127,7 @@
             </button>
 
         </div>
+
 
         <div
             id="postsContainer"
@@ -137,6 +155,7 @@
                 placeholder="Search media..."
             >
 
+
             <button
                 class="page-action-button media-upload-button"
                 onclick="openMediaUpload()"
@@ -145,6 +164,7 @@
             </button>
 
         </div>
+
 
         <div
             id="mediaContainer"
@@ -173,18 +193,22 @@
                 ×
             </button>
 
+
             <h2>
                 Post Message
             </h2>
+
 
             <textarea
                 id="postContent"
                 placeholder="Write something..."
             ></textarea>
 
+
             <label for="postFile">
                 Upload media
             </label>
+
 
             <input
                 id="postFile"
@@ -193,15 +217,18 @@
                 onchange="handlePostFile(event)"
             >
 
+
             <div
                 id="selectedPostFile"
                 class="selected-file"
             ></div>
 
+
             <div
                 id="postError"
                 class="form-error"
             ></div>
+
 
             <button
                 class="modal-submit-button"
@@ -234,13 +261,16 @@
                 ×
             </button>
 
+
             <h2>
                 Upload Video
             </h2>
 
+
             <label for="mediaTitle">
                 Title
             </label>
+
 
             <input
                 id="mediaTitle"
@@ -248,18 +278,22 @@
                 placeholder="Video title"
             >
 
+
             <label for="mediaDescription">
                 Description
             </label>
+
 
             <textarea
                 id="mediaDescription"
                 placeholder="Video description..."
             ></textarea>
 
+
             <label for="mediaVideo">
                 Video
             </label>
+
 
             <input
                 id="mediaVideo"
@@ -268,14 +302,17 @@
                 onchange="handleMediaVideo(event)"
             >
 
+
             <div
                 id="selectedVideo"
                 class="selected-file"
             ></div>
 
+
             <label for="mediaThumbnail">
                 Thumbnail
             </label>
+
 
             <input
                 id="mediaThumbnail"
@@ -284,15 +321,18 @@
                 onchange="handleMediaThumbnail(event)"
             >
 
+
             <div
                 id="selectedThumbnail"
                 class="selected-file"
             ></div>
 
+
             <div
                 id="mediaUploadError"
                 class="form-error"
             ></div>
+
 
             <button
                 class="modal-submit-button"
@@ -323,6 +363,7 @@
             Exit
         </button>
 
+
         <div class="youtube-player">
 
             <div class="youtube-video-wrapper">
@@ -332,6 +373,7 @@
                     playsinline
                 ></video>
 
+
                 <div
                     id="videoBigPlay"
                     class="video-big-play"
@@ -339,17 +381,21 @@
                     ▶
                 </div>
 
+
                 <div class="youtube-controls">
 
                     <div
                         id="videoProgressContainer"
                         class="video-progress-container"
                     >
+
                         <div
                             id="videoProgress"
                             class="video-progress"
                         ></div>
+
                     </div>
+
 
                     <div class="youtube-control-row">
 
@@ -360,12 +406,14 @@
                             ▶
                         </button>
 
+
                         <span
                             id="videoTime"
                             class="video-time"
                         >
                             0:00 / 0:00
                         </span>
+
 
                         <div class="volume-container">
 
@@ -375,6 +423,7 @@
                             >
                                 🔊
                             </button>
+
 
                             <input
                                 id="volumeSlider"
@@ -388,12 +437,14 @@
 
                         </div>
 
+
                         <button
                             id="speedButton"
                             class="player-button"
                         >
                             1x
                         </button>
+
 
                         <button
                             id="fullscreenButton"
@@ -408,10 +459,12 @@
 
             </div>
 
+
             <h2
                 id="viewerTitle"
                 class="viewer-title"
             ></h2>
+
 
             <div class="video-buttons">
 
@@ -419,15 +472,18 @@
                     Like 0
                 </button>
 
+
                 <button id="dislikeButton">
                     Dislike 0
                 </button>
+
 
                 <span id="viewCount">
                     Views: 0
                 </span>
 
             </div>
+
 
             <div class="viewer-uploader">
 
@@ -437,6 +493,7 @@
                 >
 
             </div>
+
 
             <p
                 id="viewerDescription"
@@ -476,11 +533,13 @@
                     Login
                 </h2>
 
+
                 <input
                     id="loginUsername"
                     type="text"
                     placeholder="Username"
                 >
+
 
                 <input
                     id="loginPassword"
@@ -488,10 +547,12 @@
                     placeholder="Password"
                 >
 
+
                 <div
                     id="loginError"
                     class="form-error"
                 ></div>
+
 
                 <button
                     class="modal-submit-button"
@@ -500,7 +561,9 @@
                     Login
                 </button>
 
+
                 <p>
+
                     Don't have an account?
 
                     <button
@@ -509,6 +572,7 @@
                     >
                         Sign Up
                     </button>
+
                 </p>
 
             </div>
@@ -525,11 +589,13 @@
                     Sign Up
                 </h2>
 
+
                 <input
                     id="signupUsername"
                     type="text"
                     placeholder="Username"
                 >
+
 
                 <input
                     id="signupPassword"
@@ -537,16 +603,19 @@
                     placeholder="Password"
                 >
 
+
                 <input
                     id="signupPasswordConfirm"
                     type="password"
                     placeholder="Confirm password"
                 >
 
+
                 <div
                     id="signupError"
                     class="form-error"
                 ></div>
+
 
                 <button
                     class="modal-submit-button"
@@ -555,7 +624,9 @@
                     Sign Up
                 </button>
 
+
                 <p>
+
                     Already have an account?
 
                     <button
@@ -564,6 +635,7 @@
                     >
                         Login
                     </button>
+
                 </p>
 
             </div>
@@ -586,4 +658,5 @@
     <script src="media.js"></script>
 
 </body>
+
 </html>
